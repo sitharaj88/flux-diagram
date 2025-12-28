@@ -1558,14 +1558,66 @@ export class FlowchartApp {
 
     private showExportMenu(): void {
         const content = `
-            <div class="export-options" style="display: flex; flex-direction: column; gap: 12px; padding: 4px;">
-                <button id="export-json" class="btn primary full-width">JSON (Project File)</button>
-                <div style="height: 1px; background: var(--color-border); margin: 4px 0;"></div>
-                <button id="export-png" class="btn secondary full-width">PNG (Image)</button>
-                <button id="export-svg" class="btn secondary full-width">SVG (Vector)</button>
+            <div class="export-grid">
+                <div class="export-option" id="export-json">
+                    <div class="export-icon json">
+                        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><path d="M10 12h4"></path><path d="M10 16h4"></path></svg>
+                    </div>
+                    <div class="export-details">
+                        <span class="export-label">JSON Project</span>
+                        <span class="export-sub">Save source file</span>
+                    </div>
+                </div>
+                <div class="export-option" id="export-png">
+                    <div class="export-icon png">
+                        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                    </div>
+                    <div class="export-details">
+                        <span class="export-label">PNG Image</span>
+                        <span class="export-sub">High-res bitmap</span>
+                    </div>
+                </div>
+                <div class="export-option" id="export-svg">
+                    <div class="export-icon svg">
+                        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline><path d="M6 18h12"></path></svg>
+                    </div>
+                    <div class="export-details">
+                        <span class="export-label">SVG Vector</span>
+                        <span class="export-sub">Scalable graphics</span>
+                    </div>
+                </div>
             </div>
             <style>
-                .full-width { width: 100%; justify-content: center; }
+                .export-grid { display: grid; gap: 12px; }
+                .export-option {
+                    display: flex; align-items: center; gap: 16px;
+                    padding: 16px;
+                    background: var(--color-input-bg);
+                    border: 1px solid var(--color-border);
+                    border-radius: 8px;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                }
+                .export-option:hover {
+                    background: var(--color-hover);
+                    border-color: var(--color-primary);
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+                }
+                .export-icon {
+                    width: 40px; height: 40px;
+                    display: flex; align-items: center; justify-content: center;
+                    background: var(--color-surface);
+                    border-radius: 8px;
+                    border: 1px solid var(--color-border);
+                    color: var(--color-text);
+                }
+                .export-icon.json { color: #f59e0b; }
+                .export-icon.png { color: #3b82f6; }
+                .export-icon.svg { color: #8b5cf6; }
+                .export-details { display: flex; flex-direction: column; gap: 2px; }
+                .export-label { font-weight: 600; font-size: 14px; color: var(--color-text); }
+                .export-sub { font-size: 12px; color: var(--color-text-muted); }
             </style>
         `;
 
@@ -1596,53 +1648,75 @@ export class FlowchartApp {
         return styles;
     }
 
-    private exportToSvg(): void {
+    private getProcessedSvg(): { svgString: string; width: number; height: number } {
         const originalSvg = document.getElementById('canvas-main') as unknown as SVGSVGElement;
         const svgClone = originalSvg.cloneNode(true) as SVGSVGElement;
 
-        // Embed styles
+        // Reset viewport transform
+        const viewport = svgClone.querySelector('.viewport') || svgClone.querySelector('g');
+        if (viewport) {
+            viewport.removeAttribute('transform');
+        }
+
+        // Calculate bounds
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+        if (this.document && this.document.nodes.length > 0) {
+            this.document.nodes.forEach(node => {
+                minX = Math.min(minX, node.position.x);
+                minY = Math.min(minY, node.position.y);
+                maxX = Math.max(maxX, node.position.x + node.size.width);
+                maxY = Math.max(maxY, node.position.y + node.size.height);
+            });
+            // Padding
+            const p = 60;
+            minX -= p; minY -= p; maxX += p; maxY += p;
+        } else {
+            minX = 0; minY = 0; maxX = 800; maxY = 600;
+        }
+
+        const width = maxX - minX;
+        const height = maxY - minY;
+
+        svgClone.setAttribute('viewBox', `${minX} ${minY} ${width} ${height}`);
+        svgClone.setAttribute('width', `${width}`);
+        svgClone.setAttribute('height', `${height}`);
+
+        // Ensure white background for export if transparent
+        svgClone.style.backgroundColor = 'transparent';
+
+        // Embed global styles
         const styleEl = document.createElementNS('http://www.w3.org/2000/svg', 'style');
         styleEl.textContent = this.getAllStyles();
         svgClone.insertBefore(styleEl, svgClone.firstChild);
 
-        // Serialize
         const serializer = new XMLSerializer();
-        const data = serializer.serializeToString(svgClone);
+        return { svgString: serializer.serializeToString(svgClone), width, height };
+    }
 
-        this.vscode.postMessage({ type: 'export', payload: { format: 'svg', data } });
+    private exportToSvg(): void {
+        const { svgString } = this.getProcessedSvg();
+        this.vscode.postMessage({ type: 'export', payload: { format: 'svg', data: svgString } });
         (document.querySelector('.modal-overlay') as HTMLElement)?.remove();
     }
 
     private exportToPng(): void {
-        const svg = document.getElementById('canvas-main') as unknown as SVGSVGElement;
-        const serializer = new XMLSerializer();
+        const { svgString, width, height } = this.getProcessedSvg();
 
-        // Clone for style embedding
-        const svgClone = svg.cloneNode(true) as SVGSVGElement;
-        const styleEl = document.createElementNS('http://www.w3.org/2000/svg', 'style');
-        styleEl.textContent = this.getAllStyles();
-        svgClone.insertBefore(styleEl, svgClone.firstChild);
-
-        const svgData = serializer.serializeToString(svgClone);
         const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
         const ctx = canvas.getContext('2d');
+
         const img = new Image();
-
-        // Set dimensions (use bounding box of content or viewport)
-        // Using getBoundingClientRect of wrapper
-        const wrapper = document.getElementById('canvas-container');
-        const rect = wrapper?.getBoundingClientRect();
-        canvas.width = rect?.width || 800;
-        canvas.height = rect?.height || 600;
-
-        const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+        const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
         const url = URL.createObjectURL(svgBlob);
 
         img.onload = () => {
             if (ctx) {
-                // Fill background based on theme
-                const isDark = document.documentElement.classList.contains('dark') || document.documentElement.getAttribute('data-theme') === 'dark';
-                ctx.fillStyle = isDark ? '#0c0e14' : '#f8fafc';
+                // Background color check
+                const isDark = document.documentElement.classList.contains('dark') ||
+                    document.documentElement.getAttribute('data-theme') === 'dark';
+                ctx.fillStyle = isDark ? '#0c0e14' : '#ffffff';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
                 ctx.drawImage(img, 0, 0);
 
