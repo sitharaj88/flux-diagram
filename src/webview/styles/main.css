@@ -554,13 +554,15 @@ textarea:focus-visible {
 }
 
 /* Shape Previews */
+/* Shape Previews */
 .shape-preview {
   width: 44px;
-  height: 36px;
+  height: 32px;
   background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
-  border-radius: 6px;
+  border-radius: 4px;
   box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
   transition: all 0.2s;
+  flex-shrink: 0;
 }
 
 .palette-item:hover .shape-preview {
@@ -568,64 +570,86 @@ textarea:focus-visible {
   box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
 }
 
+.shape-rectangle {
+  /* Default is rectangle */
+}
+
 .shape-diamond {
-  transform: rotate(45deg) scale(0.6);
-  border-radius: 4px;
+  width: 32px;
+  height: 32px;
+  transform: rotate(45deg);
+  border-radius: 2px;
 }
 
 .palette-item:hover .shape-diamond {
-  transform: rotate(45deg) scale(0.7);
+  transform: rotate(45deg) scale(1.1);
 }
 
 .shape-oval {
-  border-radius: 50%;
-  width: 48px;
-  height: 32px;
+  border-radius: 16px;
+  width: 46px;
+  height: 28px;
 }
 
 .shape-parallelogram {
-  transform: skewX(-12deg);
+  transform: skewX(-15deg);
+  width: 40px;
 }
 
 .shape-cylinder {
-  border-radius: 50% / 30%;
+  border-radius: 50% / 15%;
+  height: 34px;
+  width: 34px;
 }
 
 .shape-hexagon {
-  clip-path: polygon(20% 0%, 80% 0%, 100% 50%, 80% 100%, 20% 100%, 0% 50%);
+  width: 46px;
+  clip-path: polygon(15% 0%, 85% 0%, 100% 50%, 85% 100%, 15% 100%, 0% 50%);
 }
 
 .shape-document {
-  border-radius: 6px 6px 0 0;
+  width: 40px;
+  height: 34px;
+  border-radius: 2px;
+  clip-path: path("M0,0 H100 V80 Q75,100 50,80 T0,80 Z");
+  /* Fallback for path support: straightforward polygon */
   clip-path: polygon(0% 0%, 100% 0%, 100% 85%, 50% 100%, 0% 85%);
 }
 
 .shape-manual-input {
-  clip-path: polygon(0% 25%, 100% 0%, 100% 100%, 0% 100%);
+  width: 42px;
+  clip-path: polygon(0% 20%, 100% 0%, 100% 100%, 0% 100%);
 }
 
 .shape-delay {
-  border-radius: 0 20px 20px 0;
   width: 40px;
+  border-radius: 0 16px 16px 0;
 }
 
 .shape-display {
+  width: 42px;
   clip-path: polygon(15% 0%, 100% 0%, 100% 100%, 15% 100%, 0% 50%);
-  border-radius: 0 18px 18px 0;
+  border-radius: 4px;
+  /* Soften edges slightly */
 }
 
 .shape-connector {
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
 }
 
 .shape-off-page-connector {
-  clip-path: polygon(0% 0%, 100% 0%, 100% 75%, 50% 100%, 0% 75%);
+  width: 36px;
+  height: 32px;
+  clip-path: polygon(0% 0%, 100% 0%, 100% 70%, 50% 100%, 0% 70%);
 }
 
 .shape-note {
-  clip-path: polygon(0% 0%, 75% 0%, 100% 25%, 100% 100%, 0% 100%);
+  width: 36px;
+  height: 34px;
+  background: var(--color-warning);
+  clip-path: polygon(0% 0%, 70% 0%, 100% 30%, 100% 100%, 0% 100%);
   position: relative;
 }
 
@@ -635,9 +659,9 @@ textarea:focus-visible {
   top: 0;
   right: 0;
   width: 11px;
-  height: 9px;
-  background: rgba(255, 255, 255, 0.2);
-  clip-path: polygon(0 0, 100% 100%, 0 100%);
+  height: 11px;
+  background: rgba(0, 0, 0, 0.1);
+  clip-path: polygon(0 0, 0% 100%, 100% 100%);
 }
 
 /* Connector Previews */
@@ -934,7 +958,7 @@ body.dragging * {
 .minimap {
   position: absolute;
   bottom: 20px;
-  right: 200px;
+  right: 280px;
   width: 180px;
   height: 130px;
   background: var(--color-surface);
