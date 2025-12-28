@@ -1,0 +1,240 @@
+{
+  "metadata": {
+    "id": "demo-flowchart-001",
+    "name": "Sample Flowchart",
+    "description": "A demo flowchart showing basic features",
+    "version": "1.0.0",
+    "createdAt": 1703789400000,
+    "updatedAt": 1703789400000,
+    "author": "Flowchart Builder"
+  },
+  "nodes": [
+    {
+      "id": "node-1",
+      "type": "oval",
+      "position": { "x": 100, "y": 50 },
+      "size": { "width": 140, "height": 70 },
+      "data": { "label": "Start" },
+      "style": {
+        "backgroundColor": "#10b981",
+        "borderColor": "#059669",
+        "borderWidth": 2,
+        "borderRadius": 35,
+        "textColor": "#ffffff",
+        "fontSize": 16,
+        "fontFamily": "Inter, system-ui, sans-serif",
+        "fontWeight": "bold",
+        "textAlign": "center",
+        "opacity": 1,
+        "shadow": true
+      },
+      "ports": [
+        { "id": "port-1-bottom", "position": "bottom", "offset": 0.5, "connected": true }
+      ],
+      "metadata": { "createdAt": 1703789400000, "updatedAt": 1703789400000, "locked": false, "visible": true, "zIndex": 0 }
+    },
+    {
+      "id": "node-2",
+      "type": "rectangle",
+      "position": { "x": 90, "y": 180 },
+      "size": { "width": 160, "height": 80 },
+      "data": { "label": "Process Data" },
+      "style": {
+        "backgroundColor": "#ffffff",
+        "borderColor": "#6366f1",
+        "borderWidth": 2,
+        "borderRadius": 8,
+        "textColor": "#1e293b",
+        "fontSize": 14,
+        "fontFamily": "Inter, system-ui, sans-serif",
+        "fontWeight": "normal",
+        "textAlign": "center",
+        "opacity": 1,
+        "shadow": true
+      },
+      "ports": [
+        { "id": "port-2-top", "position": "top", "offset": 0.5, "connected": true },
+        { "id": "port-2-bottom", "position": "bottom", "offset": 0.5, "connected": true }
+      ],
+      "metadata": { "createdAt": 1703789400000, "updatedAt": 1703789400000, "locked": false, "visible": true, "zIndex": 1 }
+    },
+    {
+      "id": "node-3",
+      "type": "diamond",
+      "position": { "x": 110, "y": 320 },
+      "size": { "width": 120, "height": 120 },
+      "data": { "label": "Valid?" },
+      "style": {
+        "backgroundColor": "#fef3c7",
+        "borderColor": "#f59e0b",
+        "borderWidth": 2,
+        "borderRadius": 0,
+        "textColor": "#92400e",
+        "fontSize": 14,
+        "fontFamily": "Inter, system-ui, sans-serif",
+        "fontWeight": "bold",
+        "textAlign": "center",
+        "opacity": 1,
+        "shadow": true
+      },
+      "ports": [
+        { "id": "port-3-top", "position": "top", "offset": 0.5, "connected": true },
+        { "id": "port-3-right", "position": "right", "offset": 0.5, "connected": true },
+        { "id": "port-3-bottom", "position": "bottom", "offset": 0.5, "connected": true }
+      ],
+      "metadata": { "createdAt": 1703789400000, "updatedAt": 1703789400000, "locked": false, "visible": true, "zIndex": 2 }
+    },
+    {
+      "id": "node-4",
+      "type": "rectangle",
+      "position": { "x": 300, "y": 340 },
+      "size": { "width": 160, "height": 80 },
+      "data": { "label": "Show Error" },
+      "style": {
+        "backgroundColor": "#fef2f2",
+        "borderColor": "#ef4444",
+        "borderWidth": 2,
+        "borderRadius": 8,
+        "textColor": "#b91c1c",
+        "fontSize": 14,
+        "fontFamily": "Inter, system-ui, sans-serif",
+        "fontWeight": "normal",
+        "textAlign": "center",
+        "opacity": 1,
+        "shadow": true
+      },
+      "ports": [
+        { "id": "port-4-left", "position": "left", "offset": 0.5, "connected": true },
+        { "id": "port-4-top", "position": "top", "offset": 0.5, "connected": true }
+      ],
+      "metadata": { "createdAt": 1703789400000, "updatedAt": 1703789400000, "locked": false, "visible": true, "zIndex": 3 }
+    },
+    {
+      "id": "node-5",
+      "type": "rectangle",
+      "position": { "x": 90, "y": 500 },
+      "size": { "width": 160, "height": 80 },
+      "data": { "label": "Save Results" },
+      "style": {
+        "backgroundColor": "#ffffff",
+        "borderColor": "#6366f1",
+        "borderWidth": 2,
+        "borderRadius": 8,
+        "textColor": "#1e293b",
+        "fontSize": 14,
+        "fontFamily": "Inter, system-ui, sans-serif",
+        "fontWeight": "normal",
+        "textAlign": "center",
+        "opacity": 1,
+        "shadow": true
+      },
+      "ports": [
+        { "id": "port-5-top", "position": "top", "offset": 0.5, "connected": true },
+        { "id": "port-5-bottom", "position": "bottom", "offset": 0.5, "connected": true }
+      ],
+      "metadata": { "createdAt": 1703789400000, "updatedAt": 1703789400000, "locked": false, "visible": true, "zIndex": 4 }
+    },
+    {
+      "id": "node-6",
+      "type": "oval",
+      "position": { "x": 100, "y": 640 },
+      "size": { "width": 140, "height": 70 },
+      "data": { "label": "End" },
+      "style": {
+        "backgroundColor": "#ef4444",
+        "borderColor": "#dc2626",
+        "borderWidth": 2,
+        "borderRadius": 35,
+        "textColor": "#ffffff",
+        "fontSize": 16,
+        "fontFamily": "Inter, system-ui, sans-serif",
+        "fontWeight": "bold",
+        "textAlign": "center",
+        "opacity": 1,
+        "shadow": true
+      },
+      "ports": [
+        { "id": "port-6-top", "position": "top", "offset": 0.5, "connected": true }
+      ],
+      "metadata": { "createdAt": 1703789400000, "updatedAt": 1703789400000, "locked": false, "visible": true, "zIndex": 5 }
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge-1",
+      "type": "bezier",
+      "source": { "nodeId": "node-1", "portId": "port-1-bottom" },
+      "target": { "nodeId": "node-2", "portId": "port-2-top" },
+      "waypoints": [],
+      "style": { "strokeColor": "#6366f1", "strokeWidth": 2, "animated": false, "opacity": 1 },
+      "sourceArrow": "none",
+      "targetArrow": "arrow",
+      "metadata": { "createdAt": 1703789400000, "updatedAt": 1703789400000, "zIndex": 0 }
+    },
+    {
+      "id": "edge-2",
+      "type": "bezier",
+      "source": { "nodeId": "node-2", "portId": "port-2-bottom" },
+      "target": { "nodeId": "node-3", "portId": "port-3-top" },
+      "waypoints": [],
+      "style": { "strokeColor": "#6366f1", "strokeWidth": 2, "animated": false, "opacity": 1 },
+      "sourceArrow": "none",
+      "targetArrow": "arrow",
+      "metadata": { "createdAt": 1703789400000, "updatedAt": 1703789400000, "zIndex": 1 }
+    },
+    {
+      "id": "edge-3",
+      "type": "bezier",
+      "source": { "nodeId": "node-3", "portId": "port-3-right" },
+      "target": { "nodeId": "node-4", "portId": "port-4-left" },
+      "waypoints": [],
+      "style": { "strokeColor": "#ef4444", "strokeWidth": 2, "animated": false, "opacity": 1 },
+      "label": { "text": "No", "position": 0.5, "offset": { "x": 0, "y": -10 }, "style": { "backgroundColor": "#ffffff", "textColor": "#ef4444", "fontSize": 12, "padding": 4, "borderRadius": 4 } },
+      "sourceArrow": "none",
+      "targetArrow": "arrow",
+      "metadata": { "createdAt": 1703789400000, "updatedAt": 1703789400000, "zIndex": 2 }
+    },
+    {
+      "id": "edge-4",
+      "type": "orthogonal",
+      "source": { "nodeId": "node-4", "portId": "port-4-top" },
+      "target": { "nodeId": "node-2", "portId": "port-2-top" },
+      "waypoints": [],
+      "style": { "strokeColor": "#ef4444", "strokeWidth": 2, "strokeDasharray": "5,5", "animated": true, "opacity": 1 },
+      "sourceArrow": "none",
+      "targetArrow": "arrow",
+      "metadata": { "createdAt": 1703789400000, "updatedAt": 1703789400000, "zIndex": 3 }
+    },
+    {
+      "id": "edge-5",
+      "type": "bezier",
+      "source": { "nodeId": "node-3", "portId": "port-3-bottom" },
+      "target": { "nodeId": "node-5", "portId": "port-5-top" },
+      "waypoints": [],
+      "style": { "strokeColor": "#10b981", "strokeWidth": 2, "animated": false, "opacity": 1 },
+      "label": { "text": "Yes", "position": 0.5, "offset": { "x": 0, "y": -10 }, "style": { "backgroundColor": "#ffffff", "textColor": "#10b981", "fontSize": 12, "padding": 4, "borderRadius": 4 } },
+      "sourceArrow": "none",
+      "targetArrow": "arrow",
+      "metadata": { "createdAt": 1703789400000, "updatedAt": 1703789400000, "zIndex": 4 }
+    },
+    {
+      "id": "edge-6",
+      "type": "bezier",
+      "source": { "nodeId": "node-5", "portId": "port-5-bottom" },
+      "target": { "nodeId": "node-6", "portId": "port-6-top" },
+      "waypoints": [],
+      "style": { "strokeColor": "#6366f1", "strokeWidth": 2, "animated": false, "opacity": 1 },
+      "sourceArrow": "none",
+      "targetArrow": "arrow",
+      "metadata": { "createdAt": 1703789400000, "updatedAt": 1703789400000, "zIndex": 5 }
+    }
+  ],
+  "viewport": { "x": 0, "y": 0, "scale": 1 },
+  "settings": {
+    "gridSize": 20,
+    "showGrid": true,
+    "snapToGrid": true,
+    "showMinimap": true,
+    "theme": "auto"
+  }
+}

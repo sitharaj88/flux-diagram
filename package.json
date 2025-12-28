@@ -1,0 +1,275 @@
+{
+  "name": "flowchart-builder",
+  "displayName": "Flowchart Builder",
+  "description": "Enterprise-level flowchart builder with modern UI and support for large diagrams",
+  "version": "1.0.0",
+  "publisher": "flowchart-builder",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Visualization",
+    "Other"
+  ],
+  "keywords": [
+    "flowchart",
+    "diagram",
+    "graph",
+    "visualization",
+    "workflow"
+  ],
+  "icon": "media/icon.png",
+  "galleryBanner": {
+    "color": "#1e1e2e",
+    "theme": "dark"
+  },
+  "activationEvents": [
+    "onCustomEditor:flowchartBuilder.editor",
+    "onView:flowchartBuilder.flowcharts",
+    "onView:flowchartBuilder.templates",
+    "onView:flowchartBuilder.recent"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "flowchartBuilder.newFlowchart",
+        "title": "New Flowchart",
+        "category": "Flowchart Builder",
+        "icon": "$(add)"
+      },
+      {
+        "command": "flowchartBuilder.exportPNG",
+        "title": "Export as PNG",
+        "category": "Flowchart Builder",
+        "icon": "$(export)"
+      },
+      {
+        "command": "flowchartBuilder.exportSVG",
+        "title": "Export as SVG",
+        "category": "Flowchart Builder"
+      },
+      {
+        "command": "flowchartBuilder.exportJSON",
+        "title": "Export as JSON",
+        "category": "Flowchart Builder"
+      },
+      {
+        "command": "flowchartBuilder.autoLayout",
+        "title": "Auto Layout",
+        "category": "Flowchart Builder",
+        "icon": "$(layout)"
+      },
+      {
+        "command": "flowchartBuilder.zoomIn",
+        "title": "Zoom In",
+        "category": "Flowchart Builder",
+        "icon": "$(zoom-in)"
+      },
+      {
+        "command": "flowchartBuilder.zoomOut",
+        "title": "Zoom Out",
+        "category": "Flowchart Builder",
+        "icon": "$(zoom-out)"
+      },
+      {
+        "command": "flowchartBuilder.fitToView",
+        "title": "Fit to View",
+        "category": "Flowchart Builder",
+        "icon": "$(screen-full)"
+      }
+    ],
+    "customEditors": [
+      {
+        "viewType": "flowchartBuilder.editor",
+        "displayName": "Flowchart Editor",
+        "selector": [
+          {
+            "filenamePattern": "*.flowchart"
+          }
+        ],
+        "priority": "default"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "flowchartBuilder",
+          "title": "Flowchart Builder",
+          "icon": "media/flowchart-icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "flowchartBuilder": [
+        {
+          "id": "flowchartBuilder.flowcharts",
+          "name": "Flowcharts",
+          "icon": "$(symbol-misc)",
+          "contextualTitle": "Flowchart Builder"
+        },
+        {
+          "id": "flowchartBuilder.templates",
+          "name": "Templates",
+          "icon": "$(file-code)"
+        },
+        {
+          "id": "flowchartBuilder.recent",
+          "name": "Recent",
+          "icon": "$(history)"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "flowchartBuilder.flowcharts",
+        "contents": "No flowchart files found in workspace.\n[Create New Flowchart](command:flowchartBuilder.newFlowchart)\n[Open Flowchart](command:workbench.action.files.openFile)"
+      },
+      {
+        "view": "flowchartBuilder.templates",
+        "contents": "Flowchart templates to quickly get started.\n[Process Flow](command:flowchartBuilder.templateProcess)\n[Decision Tree](command:flowchartBuilder.templateDecision)\n[Swimlane](command:flowchartBuilder.templateSwimlane)"
+      },
+      {
+        "view": "flowchartBuilder.recent",
+        "contents": "No recent flowcharts.\nOpen a .flowchart file to see it here."
+      }
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "flowchartBuilder.newFlowchart",
+          "when": "true"
+        },
+        {
+          "command": "flowchartBuilder.exportPNG",
+          "when": "activeCustomEditorId == flowchartBuilder.editor"
+        },
+        {
+          "command": "flowchartBuilder.exportSVG",
+          "when": "activeCustomEditorId == flowchartBuilder.editor"
+        },
+        {
+          "command": "flowchartBuilder.autoLayout",
+          "when": "activeCustomEditorId == flowchartBuilder.editor"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "flowchartBuilder.zoomIn",
+          "when": "activeCustomEditorId == flowchartBuilder.editor",
+          "group": "navigation@1"
+        },
+        {
+          "command": "flowchartBuilder.zoomOut",
+          "when": "activeCustomEditorId == flowchartBuilder.editor",
+          "group": "navigation@2"
+        },
+        {
+          "command": "flowchartBuilder.fitToView",
+          "when": "activeCustomEditorId == flowchartBuilder.editor",
+          "group": "navigation@3"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "flowchartBuilder.zoomIn",
+        "key": "ctrl+=",
+        "mac": "cmd+=",
+        "when": "activeCustomEditorId == flowchartBuilder.editor"
+      },
+      {
+        "command": "flowchartBuilder.zoomOut",
+        "key": "ctrl+-",
+        "mac": "cmd+-",
+        "when": "activeCustomEditorId == flowchartBuilder.editor"
+      },
+      {
+        "command": "flowchartBuilder.fitToView",
+        "key": "ctrl+0",
+        "mac": "cmd+0",
+        "when": "activeCustomEditorId == flowchartBuilder.editor"
+      },
+      {
+        "command": "flowchartBuilder.autoLayout",
+        "key": "ctrl+shift+l",
+        "mac": "cmd+shift+l",
+        "when": "activeCustomEditorId == flowchartBuilder.editor"
+      }
+    ],
+    "configuration": {
+      "title": "Flowchart Builder",
+      "properties": {
+        "flowchartBuilder.defaultTheme": {
+          "type": "string",
+          "default": "auto",
+          "enum": [
+            "auto",
+            "light",
+            "dark"
+          ],
+          "description": "Default theme for the flowchart editor"
+        },
+        "flowchartBuilder.gridSize": {
+          "type": "number",
+          "default": 20,
+          "minimum": 5,
+          "maximum": 100,
+          "description": "Grid size for snapping in pixels"
+        },
+        "flowchartBuilder.showGrid": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show grid in the canvas"
+        },
+        "flowchartBuilder.showMinimap": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show minimap for navigation"
+        },
+        "flowchartBuilder.autoSave": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically save changes"
+        },
+        "flowchartBuilder.undoHistoryLimit": {
+          "type": "number",
+          "default": 50,
+          "minimum": 10,
+          "maximum": 200,
+          "description": "Maximum number of undo steps"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run build",
+    "build": "node esbuild.config.js --production",
+    "watch": "node esbuild.config.js --watch",
+    "dev": "node esbuild.config.js --watch",
+    "lint": "eslint src --ext ts",
+    "lint:fix": "eslint src --ext ts --fix",
+    "format": "prettier --write \"src/**/*.{ts,css,html}\"",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "package": "vsce package",
+    "publish": "vsce publish"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.11",
+    "@types/node": "^20.10.6",
+    "@types/vscode": "^1.85.0",
+    "@typescript-eslint/eslint-plugin": "^6.16.0",
+    "@typescript-eslint/parser": "^6.16.0",
+    "@vscode/vsce": "^2.22.0",
+    "esbuild": "^0.19.11",
+    "eslint": "^8.56.0",
+    "eslint-config-prettier": "^9.1.0",
+    "jest": "^29.7.0",
+    "prettier": "^3.1.1",
+    "ts-jest": "^29.1.1",
+    "typescript": "^5.3.3"
+  }
+}

@@ -1,0 +1,41 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "type": "npm",
+            "script": "watch",
+            "group": "build",
+            "problemMatcher": "$esbuild-watch",
+            "isBackground": true,
+            "label": "npm: watch",
+            "presentation": {
+                "reveal": "never",
+                "panel": "dedicated"
+            }
+        },
+        {
+            "type": "npm",
+            "script": "build",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": "$tsc",
+            "label": "npm: build"
+        },
+        {
+            "type": "npm",
+            "script": "lint",
+            "problemMatcher": [
+                "$eslint-stylish"
+            ],
+            "label": "npm: lint"
+        },
+        {
+            "type": "npm",
+            "script": "test",
+            "group": "test",
+            "label": "npm: test"
+        }
+    ]
+}
