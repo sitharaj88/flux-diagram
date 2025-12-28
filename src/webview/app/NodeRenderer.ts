@@ -106,6 +106,15 @@ export class NodeRenderer {
                 const fold = 20;
                 shape.setAttribute('d', `M 0 0 L ${width - fold} 0 L ${width} ${fold} L ${width} ${height} L 0 ${height} Z M ${width - fold} 0 L ${width - fold} ${fold} L ${width} ${fold}`);
                 break;
+            case 'document':
+                shape = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                const wave = 12;
+                shape.setAttribute('d', `M 0 0 L ${width} 0 L ${width} ${height - wave} Q ${width * 0.75} ${height + wave / 2} ${width * 0.5} ${height - wave} T 0 ${height - wave} Z`);
+                break;
+            case 'triangle':
+                shape = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+                shape.setAttribute('points', `${width / 2},0 ${width},${height} 0,${height}`);
+                break;
             default: // rectangle
                 shape = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
                 shape.setAttribute('x', '0');
