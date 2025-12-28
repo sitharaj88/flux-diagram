@@ -1713,11 +1713,8 @@ export class FlowchartApp {
 
         img.onload = () => {
             if (ctx) {
-                // Background color check
-                const isDark = document.documentElement.classList.contains('dark') ||
-                    document.documentElement.getAttribute('data-theme') === 'dark';
-                ctx.fillStyle = isDark ? '#0c0e14' : '#ffffff';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                // Transparent background (User request)
+                ctx.clearRect(0, 0, canvas.width, canvas.height); // Ensure clean
                 ctx.drawImage(img, 0, 0);
 
                 const pngData = canvas.toDataURL('image/png');
