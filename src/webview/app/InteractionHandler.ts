@@ -61,7 +61,7 @@ export class InteractionHandler {
     }
 
     private handleMouseDown(e: MouseEvent): void {
-        if (e.button !== 0) return;
+        if (e.button !== 0) { return; }
 
         const target = e.target as SVGElement;
         const worldPos = this.getWorldPosition(e);
@@ -137,7 +137,7 @@ export class InteractionHandler {
             e.preventDefault();
 
             // Apply snap to grid if enabled
-            const settings = this.app.getSettings?.() || { snapToGrid: true, gridSize: 20 };
+            const settings = this.app.getSettings() ?? { snapToGrid: true, gridSize: 20 };
             let newX = worldPos.x - this.dragOffset.x;
             let newY = worldPos.y - this.dragOffset.y;
 
@@ -251,7 +251,7 @@ export class InteractionHandler {
         const nodeId = nodeGroup?.dataset.nodeId || null;
 
         // Only update if hovered node changed
-        if (nodeId === this.hoveredNodeId) return;
+        if (nodeId === this.hoveredNodeId) { return; }
 
         // Hide ports on previously hovered node
         if (this.hoveredNodeId) {
@@ -288,7 +288,7 @@ export class InteractionHandler {
 
     private createConnectionLine(startPos: Position): void {
         const overlay = document.getElementById('canvas-overlay');
-        if (!overlay) return;
+        if (!overlay) { return; }
 
         const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
         line.setAttribute('class', 'connection-preview-line');
@@ -302,7 +302,6 @@ export class InteractionHandler {
         line.setAttribute('stroke-linecap', 'round');
 
         // We need to add it to the main SVG, not the overlay
-        const mainSvg = document.getElementById('canvas-main');
         const overlayGroup = document.getElementById('canvas-overlay');
         if (overlayGroup) {
             overlayGroup.appendChild(line);
@@ -312,7 +311,7 @@ export class InteractionHandler {
     }
 
     private updateConnectionLine(endPos: Position): void {
-        if (!this.connectionLine) return;
+        if (!this.connectionLine) { return; }
 
         this.connectionLine.setAttribute('x2', String(endPos.x));
         this.connectionLine.setAttribute('y2', String(endPos.y));

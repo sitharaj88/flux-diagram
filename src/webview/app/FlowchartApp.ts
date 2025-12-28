@@ -8,7 +8,7 @@ import { NodeRenderer } from './NodeRenderer';
 import { EdgeRenderer } from './EdgeRenderer';
 import { InteractionHandler } from './InteractionHandler';
 import { Minimap } from './Minimap';
-import type { FlowchartDocument, FlowNode, FlowEdge, NodeType, Position, Transform } from '../../types';
+import type { FlowchartDocument, FlowNode, FlowEdge, NodeType, Position } from '../../types';
 
 interface VSCodeAPI {
     postMessage(message: unknown): void;
@@ -33,6 +33,11 @@ export class FlowchartApp {
     private undoStack: FlowchartDocument[] = [];
     private redoStack: FlowchartDocument[] = [];
     private isDirty = false;
+
+
+    public getSettings(): FlowchartDocument['settings'] | undefined {
+        return this.document?.settings;
+    }
 
     constructor(vscode: VSCodeAPI) {
         this.vscode = vscode;
@@ -143,7 +148,7 @@ export class FlowchartApp {
     }
 
     private saveDocument(): void {
-        if (!this.document) return;
+        if (!this.document) { return; }
 
         this.document.metadata.updatedAt = Date.now();
         this.document.viewport = this.canvas.getViewport();
@@ -158,7 +163,7 @@ export class FlowchartApp {
     }
 
     private pushHistory(): void {
-        if (!this.document) return;
+        if (!this.document) { return; }
 
         // Deep clone current state
         const snapshot = JSON.parse(JSON.stringify(this.document)) as FlowchartDocument;
@@ -177,7 +182,7 @@ export class FlowchartApp {
     }
 
     undo(): void {
-        if (this.undoStack.length === 0 || !this.document) return;
+        if (this.undoStack.length === 0 || !this.document) { return; }
 
         // Save current state to redo
         const current = JSON.parse(JSON.stringify(this.document)) as FlowchartDocument;
@@ -195,7 +200,7 @@ export class FlowchartApp {
     }
 
     redo(): void {
-        if (this.redoStack.length === 0 || !this.document) return;
+        if (this.redoStack.length === 0 || !this.document) { return; }
 
         // Save current state to undo
         const current = JSON.parse(JSON.stringify(this.document)) as FlowchartDocument;
@@ -340,7 +345,7 @@ export class FlowchartApp {
 
     moveNode(nodeId: string, position: Position): void {
         const node = this.document!.nodes.find((n) => n.id === nodeId);
-        if (!node) return;
+        if (!node) { return; }
 
         // Snap to grid if enabled
         if (this.document!.settings.snapToGrid) {
@@ -362,7 +367,7 @@ export class FlowchartApp {
 
     resizeNode(nodeId: string, size: { width: number; height: number }): void {
         const node = this.document!.nodes.find((n) => n.id === nodeId);
-        if (!node) return;
+        if (!node) { return; }
 
         node.size = size;
         node.metadata.updatedAt = Date.now();
@@ -374,7 +379,7 @@ export class FlowchartApp {
         this.pushHistory();
 
         const node = this.document!.nodes.find((n) => n.id === nodeId);
-        if (!node) return;
+        if (!node) { return; }
 
         node.data = { ...node.data, ...data };
         node.metadata.updatedAt = Date.now();
@@ -386,7 +391,7 @@ export class FlowchartApp {
         this.pushHistory();
 
         const node = this.document!.nodes.find((n) => n.id === nodeId);
-        if (!node) return;
+        if (!node) { return; }
 
         node.style = { ...node.style, ...style };
         node.metadata.updatedAt = Date.now();
@@ -417,7 +422,7 @@ export class FlowchartApp {
 
     addEdge(sourceNodeId: string, sourcePortId: string, targetNodeId: string, targetPortId: string): FlowEdge | null {
         // Prevent self-loops
-        if (sourceNodeId === targetNodeId) return null;
+        if (sourceNodeId === targetNodeId) { return null; }
 
         // Check if edge already exists
         const exists = this.document!.edges.some(
@@ -427,7 +432,7 @@ export class FlowchartApp {
                 e.target.nodeId === targetNodeId &&
                 e.target.portId === targetPortId
         );
-        if (exists) return null;
+        if (exists) { return null; }
 
         this.pushHistory();
 
@@ -510,7 +515,7 @@ export class FlowchartApp {
     }
 
     deleteSelected(): void {
-        if (this.selectedNodeIds.size === 0 && this.selectedEdgeIds.size === 0) return;
+        if (this.selectedNodeIds.size === 0 && this.selectedEdgeIds.size === 0) { return; }
 
         this.pushHistory();
 
@@ -542,7 +547,7 @@ export class FlowchartApp {
     // ==========================================================================
 
     copy(): void {
-        if (this.selectedNodeIds.size === 0) return;
+        if (this.selectedNodeIds.size === 0) { return; }
 
         const nodes = this.document!.nodes.filter((n) => this.selectedNodeIds.has(n.id));
         const nodeIds = new Set(nodes.map((n) => n.id));
@@ -561,7 +566,7 @@ export class FlowchartApp {
     }
 
     paste(): void {
-        if (!this.clipboard) return;
+        if (!this.clipboard) { return; }
 
         this.pushHistory();
 
@@ -608,7 +613,7 @@ export class FlowchartApp {
     // ==========================================================================
 
     private render(): void {
-        if (!this.document) return;
+        if (!this.document) { return; }
 
         // Filter visible nodes based on layers
         const visibleLayers = new Set(
@@ -631,7 +636,7 @@ export class FlowchartApp {
 
     private renderLayersPanel(): void {
         const container = document.getElementById('layers-panel');
-        if (!container) return;
+        if (!container) { return; }
 
         // Ensure layers exist and default layer is present
         if (!this.document!.layers) {
@@ -642,7 +647,7 @@ export class FlowchartApp {
                 { id: 'default', name: 'Default Layer', visible: true, locked: false }
             );
             // Assign existing nodes to default layer
-            this.document!.nodes.forEach(n => { if (!n.layerId) n.layerId = 'default'; });
+            this.document!.nodes.forEach(n => { if (!n.layerId) { n.layerId = 'default'; } });
         }
 
         const layersList = this.document!.layers.map(layer => `
@@ -945,13 +950,13 @@ export class FlowchartApp {
         document.getElementById('setting-minimap')?.addEventListener('change', (e) => {
             this.document!.settings.showMinimap = (e.target as HTMLInputElement).checked;
             const minimapEl = document.getElementById('minimap');
-            if (minimapEl) minimapEl.style.display = this.document!.settings.showMinimap ? 'block' : 'none';
+            if (minimapEl) { minimapEl.style.display = this.document!.settings.showMinimap ? 'block' : 'none'; }
         });
 
         document.getElementById('setting-grid')?.addEventListener('change', (e) => {
             this.document!.settings.showGrid = (e.target as HTMLInputElement).checked;
             const gridEl = document.getElementById('canvas-grid');
-            if (gridEl) gridEl.style.display = this.document!.settings.showGrid ? 'block' : 'none';
+            if (gridEl) { gridEl.style.display = this.document!.settings.showGrid ? 'block' : 'none'; }
         });
 
         document.getElementById('setting-snap')?.addEventListener('change', (e) => {
@@ -966,7 +971,7 @@ export class FlowchartApp {
                 pattern.setAttribute('width', String(size));
                 pattern.setAttribute('height', String(size));
                 const path = pattern.querySelector('path');
-                if (path) path.setAttribute('d', `M ${size} 0 L 0 0 0 ${size}`);
+                if (path) { path.setAttribute('d', `M ${size} 0 L 0 0 0 ${size}`); }
             }
         });
     }
@@ -1053,13 +1058,13 @@ export class FlowchartApp {
 
         overlay.querySelector('.modal-close')?.addEventListener('click', close);
         overlay.addEventListener('click', (e) => {
-            if (e.target === overlay) close();
+            if (e.target === overlay) { close(); }
         });
     }
 
     private alignSelectedNodes(type: 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom'): void {
         const nodes = this.document!.nodes.filter(n => this.selectedNodeIds.has(n.id));
-        if (nodes.length < 2) return;
+        if (nodes.length < 2) { return; }
         this.pushHistory();
 
         if (type === 'left') {
@@ -1141,7 +1146,7 @@ export class FlowchartApp {
 
         container?.addEventListener('drop', (e) => {
             e.preventDefault();
-            const type = (e as DragEvent).dataTransfer?.getData('node-type') as NodeType;
+            const type = (e).dataTransfer?.getData('node-type') as NodeType;
             if (type) {
                 const worldPos = this.canvas.screenToWorld({ x: e.clientX, y: e.clientY });
                 this.addNode(type, worldPos);
@@ -1195,7 +1200,7 @@ export class FlowchartApp {
     private setupKeyboard(): void {
         document.addEventListener('keydown', (e) => {
             // Don't handle if in input
-            if ((e.target as HTMLElement).tagName === 'INPUT') return;
+            if ((e.target as HTMLElement).tagName === 'INPUT') { return; }
 
             const isMod = e.ctrlKey || e.metaKey;
 
@@ -1503,7 +1508,7 @@ export class FlowchartApp {
 
     private showToast(message: string, type: 'info' | 'success' | 'error' = 'info'): void {
         const container = document.getElementById('toast-container');
-        if (!container) return;
+        if (!container) { return; }
 
         const toast = document.createElement('div');
         toast.className = `toast toast-${type}`;
@@ -1624,7 +1629,7 @@ export class FlowchartApp {
         this.showModal('Export Flowchart', content);
 
         document.getElementById('export-json')?.addEventListener('click', () => {
-            if (!this.document) return;
+            if (!this.document) { return; }
             const data = JSON.stringify(this.document, null, 2);
             this.vscode.postMessage({ type: 'export', payload: { data, format: 'json' } });
             (document.querySelector('.modal-overlay') as HTMLElement)?.remove();
@@ -1643,7 +1648,7 @@ export class FlowchartApp {
                 for (let j = 0; j < rules.length; j++) {
                     styles += rules[j].cssText;
                 }
-            } catch (e) { }
+            } catch { /* ignore */ }
         }
         return styles;
     }
@@ -1790,7 +1795,7 @@ export class FlowchartApp {
         // Drop Handler for templates
         const container = document.getElementById('canvas-container');
         container?.addEventListener('drop', (e) => {
-            const templateId = (e as DragEvent).dataTransfer?.getData('template');
+            const templateId = (e).dataTransfer?.getData('template');
             if (templateId) {
                 e.preventDefault();
                 const pos = this.canvas.screenToWorld({ x: e.clientX, y: e.clientY });
@@ -1800,11 +1805,11 @@ export class FlowchartApp {
     }
 
     private addTemplate(templateId: string | undefined | null, position: Position): void {
-        if (!templateId) return;
+        if (!templateId) { return; }
         const cx = position.x;
         const cy = position.y;
 
-        const uuid = () => 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+        const uuid = (): string => 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
             const r = Math.random() * 16 | 0;
             const v = c === 'x' ? r : (r & 0x3 | 0x8);
             return v.toString(16);
@@ -1815,8 +1820,6 @@ export class FlowchartApp {
             { id: 'bottom', position: 'bottom', offset: 0.5, connected: false },
             { id: 'left', position: 'left', offset: 0.5, connected: false }
         ];
-
-        const now = Date.now();
         const defaultEdgeStyle = (): EdgeStyle => ({
             strokeColor: '#6366f1',
             strokeWidth: 2,
@@ -1921,7 +1924,7 @@ export class FlowchartApp {
                 this.document.layers = [{ id: 'default', name: 'Default Layer', visible: true, locked: false }];
             }
             // Assign active layer
-            const layerId = (this as any).activeLayerId || this.document.layers[0].id;
+            const layerId = this.activeLayerId || this.document.layers[0].id;
             nodes.forEach(n => { n.layerId = layerId; });
 
             this.document.nodes.push(...nodes);
@@ -1947,8 +1950,8 @@ export class FlowchartApp {
     }
 
 
-    private handleAutoLayout(payload: { type: string }): void {
-        if (!this.document || this.document.nodes.length === 0) return;
+    private handleAutoLayout(_payload: { type: string }): void {
+        if (!this.document || this.document.nodes.length === 0) { return; }
 
         this.pushHistory();
 
@@ -1974,10 +1977,10 @@ export class FlowchartApp {
 
         while (queue.length > 0) {
             const { node, level } = queue.shift()!;
-            if (visited.has(node.id)) continue;
+            if (visited.has(node.id)) { continue; }
             visited.add(node.id);
 
-            if (!levels.has(level)) levels.set(level, []);
+            if (!levels.has(level)) { levels.set(level, []); }
             levels.get(level)!.push(node);
 
             // Find children
@@ -2036,7 +2039,7 @@ export class FlowchartApp {
     }
 
     private bringToFront(): void {
-        if (this.selectedNodeIds.size === 0) return;
+        if (this.selectedNodeIds.size === 0) { return; }
 
         this.pushHistory();
 
@@ -2052,7 +2055,7 @@ export class FlowchartApp {
     }
 
     private sendToBack(): void {
-        if (this.selectedNodeIds.size === 0) return;
+        if (this.selectedNodeIds.size === 0) { return; }
 
         this.pushHistory();
 

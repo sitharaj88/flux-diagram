@@ -112,7 +112,7 @@ export class CanvasController {
     private zoomAt(x: number, y: number, delta: number): void {
         const oldScale = this.viewport.scale;
         const newScale = Math.max(this.minScale, Math.min(this.maxScale, oldScale * delta));
-        if (newScale === oldScale) return;
+        if (newScale === oldScale) {return;}
 
         const scaleFactor = newScale / oldScale;
         this.viewport.x = x - (x - this.viewport.x) * scaleFactor;

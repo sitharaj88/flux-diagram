@@ -614,6 +614,12 @@ textarea:focus-visible {
   clip-path: path("M 0 0 L 40 0 L 40 28 Q 30 34 20 28 T 0 28 Z");
 }
 
+.shape-triangle {
+  width: 40px;
+  height: 34px;
+  clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
+}
+
 .shape-manual-input {
   width: 42px;
   clip-path: polygon(0% 20%, 100% 0%, 100% 100%, 0% 100%);

@@ -227,7 +227,7 @@ export class Graph {
         }
 
         const visited = new Set<UUID>();
-        const firstNode = this.nodes.keys().next().value as UUID | undefined;
+        const firstNode = this.nodes.keys().next().value;
         if (!firstNode) {
             return true;
         }

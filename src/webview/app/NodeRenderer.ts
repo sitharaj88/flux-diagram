@@ -2,7 +2,7 @@
  * Node Renderer - Renders nodes to SVG
  */
 
-import type { FlowNode, NodeType } from '../../types';
+import type { FlowNode } from '../../types';
 
 export class NodeRenderer {
     private container: SVGGElement;
@@ -52,69 +52,82 @@ export class NodeRenderer {
         let shape: SVGElement;
 
         switch (node.type) {
-            case 'diamond':
+            case 'diamond': {
                 shape = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
                 const hw = width / 2, hh = height / 2;
                 shape.setAttribute('points', `${hw},0 ${width},${hh} ${hw},${height} 0,${hh}`);
                 break;
-            case 'oval':
+            }
+            case 'oval': {
                 shape = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
                 shape.setAttribute('cx', String(width / 2));
                 shape.setAttribute('cy', String(height / 2));
                 shape.setAttribute('rx', String(width / 2));
                 shape.setAttribute('ry', String(height / 2));
                 break;
-            case 'parallelogram':
+            }
+            case 'parallelogram': {
                 shape = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
                 const skew = width * 0.2;
                 shape.setAttribute('points', `${skew},0 ${width},0 ${width - skew},${height} 0,${height}`);
                 break;
-            case 'cylinder':
+            }
+            case 'cylinder': {
                 shape = this.createCylinder(width, height);
                 break;
-            case 'hexagon':
+            }
+            case 'hexagon': {
                 shape = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
                 const inset = width * 0.15;
                 shape.setAttribute('points', `${inset},0 ${width - inset},0 ${width},${height / 2} ${width - inset},${height} ${inset},${height} 0,${height / 2}`);
                 break;
-            case 'manual-input':
+            }
+            case 'manual-input': {
                 shape = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
                 shape.setAttribute('points', `0,${height * 0.3} ${width},0 ${width},${height} 0,${height}`);
                 break;
-            case 'delay':
+            }
+            case 'delay': {
                 shape = document.createElementNS('http://www.w3.org/2000/svg', 'path');
                 const r = height / 2;
                 shape.setAttribute('d', `M 0 0 L ${width - r} 0 A ${r} ${r} 0 0 1 ${width - r} ${height} L 0 ${height} Z`);
                 break;
-            case 'display':
+            }
+            case 'display': {
                 shape = document.createElementNS('http://www.w3.org/2000/svg', 'path');
                 const dInset = width * 0.2;
                 shape.setAttribute('d', `M ${dInset} 0 L ${width - dInset} 0 A ${height / 2} ${height / 2} 0 0 1 ${width - dInset} ${height} L ${dInset} ${height} L 0 ${height / 2} Z`);
                 break;
-            case 'connector':
+            }
+            case 'connector': {
                 shape = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
                 shape.setAttribute('cx', String(width / 2));
                 shape.setAttribute('cy', String(height / 2));
                 shape.setAttribute('r', String(Math.min(width, height) / 2));
                 break;
-            case 'off-page-connector':
+            }
+            case 'off-page-connector': {
                 shape = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
                 shape.setAttribute('points', `0,0 ${width},0 ${width},${height * 0.7} ${width / 2},${height} 0,${height * 0.7}`);
                 break;
-            case 'note':
+            }
+            case 'note': {
                 shape = document.createElementNS('http://www.w3.org/2000/svg', 'path');
                 const fold = 20;
                 shape.setAttribute('d', `M 0 0 L ${width - fold} 0 L ${width} ${fold} L ${width} ${height} L 0 ${height} Z M ${width - fold} 0 L ${width - fold} ${fold} L ${width} ${fold}`);
                 break;
-            case 'document':
+            }
+            case 'document': {
                 shape = document.createElementNS('http://www.w3.org/2000/svg', 'path');
                 const wave = 12;
                 shape.setAttribute('d', `M 0 0 L ${width} 0 L ${width} ${height - wave} Q ${width * 0.75} ${height + wave / 2} ${width * 0.5} ${height - wave} T 0 ${height - wave} Z`);
                 break;
-            case 'triangle':
+            }
+            case 'triangle': {
                 shape = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
                 shape.setAttribute('points', `${width / 2},0 ${width},${height} 0,${height}`);
                 break;
+            }
             default: // rectangle
                 shape = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
                 shape.setAttribute('x', '0');
@@ -156,7 +169,7 @@ export class NodeRenderer {
 
     private createLabel(node: FlowNode): SVGTextElement {
         const { width, height } = node.size;
-        const { textColor, fontSize, fontFamily, fontWeight, textAlign } = node.style;
+        const { textColor, fontSize, fontFamily, fontWeight } = node.style;
 
         const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
         text.setAttribute('x', String(width / 2));

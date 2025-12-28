@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Handle messages from extension
     window.addEventListener('message', (event) => {
-        const message = event.data;
+        const message = event.data as { type: string; payload: unknown };
         app.handleMessage(message);
     });
 
