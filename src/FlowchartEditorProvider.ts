@@ -547,7 +547,7 @@ export class FlowchartEditorProvider implements vscode.CustomTextEditorProvider 
     });
 
     if (uri) {
-      const content = format === 'json' ? data : Buffer.from(data.split(',')[1] ?? '', 'base64');
+      const content = (format === 'json' || format === 'svg') ? data : Buffer.from(data.split(',')[1] ?? '', 'base64');
       await vscode.workspace.fs.writeFile(
         uri,
         typeof content === 'string' ? Buffer.from(content) : content

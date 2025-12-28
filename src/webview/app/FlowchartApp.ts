@@ -1557,9 +1557,102 @@ export class FlowchartApp {
     }
 
     private showExportMenu(): void {
-        const formats = ['PNG', 'SVG', 'JSON'];
-        // For now, just export as JSON
-        this.handleExport({ format: 'json' });
+        const content = `
+            <div class="export-options" style="display: flex; flex-direction: column; gap: 12px; padding: 4px;">
+                <button id="export-json" class="btn primary full-width">JSON (Project File)</button>
+                <div style="height: 1px; background: var(--color-border); margin: 4px 0;"></div>
+                <button id="export-png" class="btn secondary full-width">PNG (Image)</button>
+                <button id="export-svg" class="btn secondary full-width">SVG (Vector)</button>
+            </div>
+            <style>
+                .full-width { width: 100%; justify-content: center; }
+            </style>
+        `;
+
+        this.showModal('Export Flowchart', content);
+
+        document.getElementById('export-json')?.addEventListener('click', () => {
+            if (!this.document) return;
+            const data = JSON.stringify(this.document, null, 2);
+            this.vscode.postMessage({ type: 'export', payload: { data, format: 'json' } });
+            (document.querySelector('.modal-overlay') as HTMLElement)?.remove();
+        });
+
+        document.getElementById('export-png')?.addEventListener('click', () => this.exportToPng());
+        document.getElementById('export-svg')?.addEventListener('click', () => this.exportToSvg());
+    }
+
+    private getAllStyles(): string {
+        let styles = '';
+        const sheets = document.styleSheets;
+        for (let i = 0; i < sheets.length; i++) {
+            try {
+                const rules = sheets[i].cssRules;
+                for (let j = 0; j < rules.length; j++) {
+                    styles += rules[j].cssText;
+                }
+            } catch (e) { }
+        }
+        return styles;
+    }
+
+    private exportToSvg(): void {
+        const originalSvg = document.getElementById('canvas-main') as unknown as SVGSVGElement;
+        const svgClone = originalSvg.cloneNode(true) as SVGSVGElement;
+
+        // Embed styles
+        const styleEl = document.createElementNS('http://www.w3.org/2000/svg', 'style');
+        styleEl.textContent = this.getAllStyles();
+        svgClone.insertBefore(styleEl, svgClone.firstChild);
+
+        // Serialize
+        const serializer = new XMLSerializer();
+        const data = serializer.serializeToString(svgClone);
+
+        this.vscode.postMessage({ type: 'export', payload: { format: 'svg', data } });
+        (document.querySelector('.modal-overlay') as HTMLElement)?.remove();
+    }
+
+    private exportToPng(): void {
+        const svg = document.getElementById('canvas-main') as unknown as SVGSVGElement;
+        const serializer = new XMLSerializer();
+
+        // Clone for style embedding
+        const svgClone = svg.cloneNode(true) as SVGSVGElement;
+        const styleEl = document.createElementNS('http://www.w3.org/2000/svg', 'style');
+        styleEl.textContent = this.getAllStyles();
+        svgClone.insertBefore(styleEl, svgClone.firstChild);
+
+        const svgData = serializer.serializeToString(svgClone);
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const img = new Image();
+
+        // Set dimensions (use bounding box of content or viewport)
+        // Using getBoundingClientRect of wrapper
+        const wrapper = document.getElementById('canvas-container');
+        const rect = wrapper?.getBoundingClientRect();
+        canvas.width = rect?.width || 800;
+        canvas.height = rect?.height || 600;
+
+        const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+        const url = URL.createObjectURL(svgBlob);
+
+        img.onload = () => {
+            if (ctx) {
+                // Fill background based on theme
+                const isDark = document.documentElement.classList.contains('dark') || document.documentElement.getAttribute('data-theme') === 'dark';
+                ctx.fillStyle = isDark ? '#0c0e14' : '#f8fafc';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0);
+
+                const pngData = canvas.toDataURL('image/png');
+                this.vscode.postMessage({ type: 'export', payload: { format: 'png', data: pngData } });
+                URL.revokeObjectURL(url);
+                (document.querySelector('.modal-overlay') as HTMLElement)?.remove();
+            }
+        };
+        img.src = url;
     }
 
     private handleZoom(payload: { direction: string }): void {
@@ -1640,13 +1733,36 @@ export class FlowchartApp {
         const cx = position.x;
         const cy = position.y;
 
-        const uuid = () => crypto.randomUUID();
-        const getPorts = () => [
-            { id: 'top', position: { x: 0.5, y: 0 } },
-            { id: 'right', position: { x: 1, y: 0.5 } },
-            { id: 'bottom', position: { x: 0.5, y: 1 } },
-            { id: 'left', position: { x: 0, y: 0.5 } }
+        const uuid = () => 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+            const r = Math.random() * 16 | 0;
+            const v = c === 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+        const getPorts = (): Port[] => [
+            { id: 'top', position: 'top', offset: 0.5, connected: false },
+            { id: 'right', position: 'right', offset: 0.5, connected: false },
+            { id: 'bottom', position: 'bottom', offset: 0.5, connected: false },
+            { id: 'left', position: 'left', offset: 0.5, connected: false }
         ];
+
+        const now = Date.now();
+        const defaultEdgeStyle = (): EdgeStyle => ({
+            strokeColor: '#6366f1',
+            strokeWidth: 2,
+            animated: false,
+            opacity: 1
+        });
+
+        const createEdge = (srcNode: string, srcPort: string, tgtNode: string, tgtPort: string, edgeType: EdgeType = 'bezier'): FlowEdge => ({
+            id: uuid(),
+            type: edgeType,
+            source: { nodeId: srcNode, portId: srcPort },
+            target: { nodeId: tgtNode, portId: tgtPort },
+            waypoints: [],
+            style: defaultEdgeStyle(),
+            sourceArrow: 'none',
+            targetArrow: 'arrow',
+        });
 
         const nodes: FlowNode[] = [];
         const edges: FlowEdge[] = [];
@@ -1670,8 +1786,8 @@ export class FlowchartApp {
             );
 
             edges.push(
-                { id: uuid(), sourceId: idStart, targetId: idStep, sourcePortId: 'bottom', targetPortId: 'top', type: 'curved' },
-                { id: uuid(), sourceId: idStep, targetId: idEnd, sourcePortId: 'bottom', targetPortId: 'top', type: 'curved' }
+                createEdge(idStart, 'bottom', idStep, 'top'),
+                createEdge(idStep, 'bottom', idEnd, 'top')
             );
         } else if (templateId === 'decision') {
             const idStart = uuid();
@@ -1689,17 +1805,52 @@ export class FlowchartApp {
             );
 
             edges.push(
-                { id: uuid(), sourceId: idStart, targetId: idDec, sourcePortId: 'bottom', targetPortId: 'top', type: 'curved' },
-                { id: uuid(), sourceId: idDec, targetId: idYes, sourcePortId: 'left', targetPortId: 'top', type: 'orthogonal', label: 'Yes' },
-                { id: uuid(), sourceId: idDec, targetId: idNo, sourcePortId: 'right', targetPortId: 'top', type: 'orthogonal', label: 'No' },
-                { id: uuid(), sourceId: idYes, targetId: idEnd, sourcePortId: 'bottom', targetPortId: 'top', type: 'curved' },
-                { id: uuid(), sourceId: idNo, targetId: idEnd, sourcePortId: 'bottom', targetPortId: 'top', type: 'curved' }
+                createEdge(idStart, 'bottom', idDec, 'top'),
+                createEdge(idDec, 'left', idYes, 'top', 'orthogonal'),
+                createEdge(idDec, 'right', idNo, 'top', 'orthogonal'),
+                createEdge(idYes, 'bottom', idEnd, 'left'),
+                createEdge(idNo, 'bottom', idEnd, 'right')
+            );
+        } else if (templateId === 'swimlane') {
+            const idLane1 = uuid();
+            const idLane2 = uuid();
+            const idTask1 = uuid();
+            const idTask2 = uuid();
+
+            nodes.push(
+                { id: idLane1, type: 'rectangle', position: { x: cx - 200, y: cy - 100 }, size: { width: 180, height: 200 }, data: { label: 'Lane 1' }, style: { backgroundColor: '#f1f5f9', borderColor: '#cbd5e1', textColor: '#334155' }, ports: getPorts(), metadata: { locked: false, visible: true, zIndex: 0 } },
+                { id: idLane2, type: 'rectangle', position: { x: cx + 20, y: cy - 100 }, size: { width: 180, height: 200 }, data: { label: 'Lane 2' }, style: { backgroundColor: '#f1f5f9', borderColor: '#cbd5e1', textColor: '#334155' }, ports: getPorts(), metadata: { locked: false, visible: true, zIndex: 0 } },
+                { id: idTask1, type: 'rectangle', position: { x: cx - 175, y: cy - 30 }, size: { width: 130, height: 60 }, data: { label: 'Task A' }, style: { backgroundColor: defaults.procBg, borderColor: defaults.procBorder, textColor: defaults.procText }, ports: getPorts(), metadata: { locked: false, visible: true, zIndex: 1 } },
+                { id: idTask2, type: 'rectangle', position: { x: cx + 45, y: cy - 30 }, size: { width: 130, height: 60 }, data: { label: 'Task B' }, style: { backgroundColor: defaults.procBg, borderColor: defaults.procBorder, textColor: defaults.procText }, ports: getPorts(), metadata: { locked: false, visible: true, zIndex: 1 } }
+            );
+
+            edges.push(
+                createEdge(idTask1, 'right', idTask2, 'left')
+            );
+        } else if (templateId === 'org') {
+            const idCeo = uuid();
+            const idMgr1 = uuid();
+            const idMgr2 = uuid();
+
+            nodes.push(
+                { id: idCeo, type: 'rectangle', position: { x: cx - 60, y: cy - 100 }, size: { width: 120, height: 50 }, data: { label: 'CEO' }, style: { backgroundColor: defaults.startBg, borderColor: defaults.startBorder, textColor: '#ffffff' }, ports: getPorts(), metadata: { locked: false, visible: true, zIndex: 0 } },
+                { id: idMgr1, type: 'rectangle', position: { x: cx - 150, y: cy + 20 }, size: { width: 120, height: 50 }, data: { label: 'Manager A' }, style: { backgroundColor: defaults.procBg, borderColor: defaults.procBorder, textColor: defaults.procText }, ports: getPorts(), metadata: { locked: false, visible: true, zIndex: 0 } },
+                { id: idMgr2, type: 'rectangle', position: { x: cx + 30, y: cy + 20 }, size: { width: 120, height: 50 }, data: { label: 'Manager B' }, style: { backgroundColor: defaults.procBg, borderColor: defaults.procBorder, textColor: defaults.procText }, ports: getPorts(), metadata: { locked: false, visible: true, zIndex: 0 } }
+            );
+
+            edges.push(
+                createEdge(idCeo, 'bottom', idMgr1, 'top', 'orthogonal'),
+                createEdge(idCeo, 'bottom', idMgr2, 'top', 'orthogonal')
             );
         }
 
         if (this.document && nodes.length > 0) {
+            // Ensure meaningful layer exists
+            if (!this.document.layers || this.document.layers.length === 0) {
+                this.document.layers = [{ id: 'default', name: 'Default Layer', visible: true, locked: false }];
+            }
             // Assign active layer
-            const layerId = (this as any).activeLayerId || this.document.layers?.[0]?.id;
+            const layerId = (this as any).activeLayerId || this.document.layers[0].id;
             nodes.forEach(n => { n.layerId = layerId; });
 
             this.document.nodes.push(...nodes);
@@ -1711,15 +1862,19 @@ export class FlowchartApp {
         }
     }
 
+
     private applyTheme(theme: string): void {
         const root = document.documentElement;
+        root.classList.remove('light', 'dark');
+
         if (theme === 'auto') {
             const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            root.setAttribute('data-theme', isDark ? 'dark' : 'light');
+            root.classList.add(isDark ? 'dark' : 'light');
         } else {
-            root.setAttribute('data-theme', theme);
+            root.classList.add(theme);
         }
     }
+
 
     private handleAutoLayout(payload: { type: string }): void {
         if (!this.document || this.document.nodes.length === 0) return;
