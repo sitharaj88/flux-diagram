@@ -934,7 +934,7 @@ body.dragging * {
 .minimap {
   position: absolute;
   bottom: 20px;
-  right: 20px;
+  right: 200px;
   width: 180px;
   height: 130px;
   background: var(--color-surface);
@@ -946,6 +946,7 @@ body.dragging * {
     0 0 0 1px rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(20px);
   transition: all 0.3s;
+  z-index: 50;
 }
 
 .minimap:hover {
