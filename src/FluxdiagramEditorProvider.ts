@@ -482,11 +482,16 @@ export class FluxdiagramEditorProvider implements vscode.CustomTextEditorProvide
       <aside class="sidebar properties-panel" id="properties-panel">
         <div class="panel-header">
           <span class="panel-title">Properties</span>
-          <button class="panel-close-btn" id="properties-close" title="Close Properties Panel">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M1 1L13 13M1 13L13 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-            </svg>
-          </button>
+          <div class="panel-actions">
+            <button class="panel-toggle-btn" id="properties-toggle" title="Toggle Properties Panel">
+              <svg class="collapse-icon" width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M9 3L5 7L9 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <svg class="expand-icon" width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M5 3L9 7L5 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
         </div>
         <div class="panel-content" id="panel-content">
           <div class="empty-state">

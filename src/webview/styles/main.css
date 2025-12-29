@@ -439,6 +439,35 @@ textarea:focus-visible {
   transform: scale(0.95);
 }
 
+/* Panel toggle button */
+.panel-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: none;
+  border: 1px solid transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.panel-toggle-btn:hover {
+  background: var(--color-hover);
+  border-color: var(--color-border);
+  color: var(--color-text);
+}
+
+.panel-toggle-btn .expand-icon {
+  display: none;
+}
+
+.panel-toggle-btn .collapse-icon {
+  display: block;
+}
+
 /* Collapsed state for properties panel */
 .sidebar.properties-panel.collapsed {
   width: 44px;
@@ -457,6 +486,14 @@ textarea:focus-visible {
   justify-content: center;
   padding: 12px;
   border-bottom: none;
+}
+
+.sidebar.properties-panel.collapsed .panel-toggle-btn .collapse-icon {
+  display: none;
+}
+
+.sidebar.properties-panel.collapsed .panel-toggle-btn .expand-icon {
+  display: block;
 }
 
 
@@ -838,6 +875,19 @@ body.dragging {
 
 body.dragging * {
   cursor: grabbing !important;
+}
+
+body.selecting {
+  cursor: crosshair !important;
+}
+
+body.selecting * {
+  cursor: crosshair !important;
+}
+
+/* Marquee Selection */
+.marquee-selection {
+  pointer-events: none;
 }
 
 /* Edge Styles */

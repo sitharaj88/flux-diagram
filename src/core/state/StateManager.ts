@@ -6,9 +6,9 @@
 import type {
     FlowNode,
     FlowEdge,
-    FlowchartDocument,
-    FlowchartMetadata,
-    FlowchartSettings,
+    FluxdiagramDocument,
+    FluxdiagramMetadata,
+    FluxdiagramSettings,
     Selection,
     Transform,
     UUID,
@@ -21,6 +21,11 @@ import type {
 import { Graph, createNode, createEdge, type CreateNodeOptions, type CreateEdgeOptions } from '../models';
 import { EventBus } from '../events';
 import { generateId } from '../../utils/id';
+
+// Type aliases for backward compatibility
+type FlowchartDocument = FluxdiagramDocument;
+type FlowchartMetadata = FluxdiagramMetadata;
+type FlowchartSettings = FluxdiagramSettings;
 
 // ============================================================================
 // Command Types for Undo/Redo

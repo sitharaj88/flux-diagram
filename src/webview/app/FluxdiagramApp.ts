@@ -800,9 +800,20 @@ export class FluxdiagramApp {
             if (panel) { panel.style.display = 'none'; }
         });
 
-        document.getElementById('properties-close')?.addEventListener('click', () => {
+        document.getElementById('properties-toggle')?.addEventListener('click', () => {
             const panel = document.getElementById('properties-panel');
-            if (panel) { panel.classList.add('collapsed'); }
+            const minimap = document.getElementById('minimap');
+            if (panel) {
+                panel.classList.toggle('collapsed');
+                // Adjust minimap position based on panel state
+                if (minimap) {
+                    if (panel.classList.contains('collapsed')) {
+                        minimap.style.right = '64px';
+                    } else {
+                        minimap.style.right = '280px';
+                    }
+                }
+            }
         });
 
         this.setupTemplates();
@@ -1317,45 +1328,62 @@ export class FluxdiagramApp {
 
     private setupKeyboard(): void {
         document.addEventListener('keydown', (e) => {
-            // Don't handle if in input
-            if ((e.target as HTMLElement).tagName === 'INPUT') { return; }
+            // Don't handle if in input, textarea, or contenteditable
+            const target = e.target as HTMLElement;
+            if (target.tagName === 'INPUT' || 
+                target.tagName === 'TEXTAREA' || 
+                target.isContentEditable) { 
+                return; 
+            }
 
             const isMod = e.ctrlKey || e.metaKey;
 
             if (isMod && e.key === 'z' && !e.shiftKey) {
                 e.preventDefault();
+                e.stopPropagation();
                 this.undo();
             } else if (isMod && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
                 e.preventDefault();
+                e.stopPropagation();
                 this.redo();
             } else if (isMod && e.key === 's') {
                 e.preventDefault();
+                e.stopPropagation();
                 this.saveDocument(true); // Immediate save for keyboard shortcut
             } else if (isMod && e.key === 'c') {
                 e.preventDefault();
+                e.stopPropagation();
                 this.copy();
             } else if (isMod && e.key === 'v') {
                 e.preventDefault();
+                e.stopPropagation();
                 this.paste();
             } else if (isMod && e.key === 'd') {
                 e.preventDefault();
+                e.stopPropagation();
                 this.duplicate();
             } else if (isMod && e.key === 'a') {
                 e.preventDefault();
+                e.stopPropagation();
                 this.selectAll();
             } else if (e.key === 'Delete' || e.key === 'Backspace') {
                 e.preventDefault();
+                e.stopPropagation();
                 this.deleteSelected();
             } else if (e.key === 'Escape') {
+                e.stopPropagation();
                 this.clearSelection();
             } else if (isMod && e.key === '=') {
                 e.preventDefault();
+                e.stopPropagation();
                 this.canvas.zoomIn();
             } else if (isMod && e.key === '-') {
                 e.preventDefault();
+                e.stopPropagation();
                 this.canvas.zoomOut();
             } else if (isMod && e.key === '0') {
                 e.preventDefault();
+                e.stopPropagation();
                 this.fitToView();
             }
         });

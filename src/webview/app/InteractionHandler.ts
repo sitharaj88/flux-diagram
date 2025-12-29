@@ -21,6 +21,15 @@ export class InteractionHandler {
     private dragOffset: Position = { x: 0, y: 0 };
     private dragStartPos: Position | null = null;
 
+    // Multi-node drag state
+    private isMultiDragging = false;
+    private multiDragOffsets: Map<string, Position> = new Map();
+
+    // Marquee selection state
+    private isMarqueeSelecting = false;
+    private marqueeStartPos: Position | null = null;
+    private marqueeRect: SVGRectElement | null = null;
+
     // Connection state
     private isConnecting = false;
     private connectionStart: { nodeId: string; portId: string } | null = null;
@@ -93,7 +102,6 @@ export class InteractionHandler {
         }
 
         // Check if clicking on a node - start drag
-        // Check if clicking on a node - start drag
         const nodeGroup = target.closest('[data-node-id]') as SVGElement;
         if (nodeGroup) {
             const nodeId = nodeGroup.dataset.nodeId!;
@@ -103,23 +111,41 @@ export class InteractionHandler {
             if (node) {
                 // Prevent action if layer is locked
                 if (this.app.isLayerLocked(node.layerId) || !this.app.isLayerVisible(node.layerId)) {
-                    // Maybe show a small toast or just ignore?
                     return;
                 }
 
-                this.isDragging = true;
-                this.dragNodeId = nodeId;
-                this.dragStartPos = { ...node.position };
-                this.dragOffset = {
-                    x: worldPos.x - node.position.x,
-                    y: worldPos.y - node.position.y,
-                };
+                const selectedIds = this.app.getSelectedNodeIds();
 
-                // Select node
-                this.app.selectNode(nodeId, e.shiftKey);
+                // If clicking on a selected node without shift, drag all selected nodes
+                if (selectedIds.has(nodeId) && selectedIds.size > 1 && !e.shiftKey) {
+                    this.isMultiDragging = true;
+                    this.multiDragOffsets.clear();
+                    
+                    // Calculate offset for each selected node
+                    for (const id of selectedIds) {
+                        const n = doc?.nodes.find((nd) => nd.id === id);
+                        if (n) {
+                            this.multiDragOffsets.set(id, {
+                                x: worldPos.x - n.position.x,
+                                y: worldPos.y - n.position.y,
+                            });
+                        }
+                    }
+                    document.body.classList.add('dragging');
+                } else {
+                    // Single node drag
+                    this.isDragging = true;
+                    this.dragNodeId = nodeId;
+                    this.dragStartPos = { ...node.position };
+                    this.dragOffset = {
+                        x: worldPos.x - node.position.x,
+                        y: worldPos.y - node.position.y,
+                    };
 
-                // Add dragging class
-                document.body.classList.add('dragging');
+                    // Select node
+                    this.app.selectNode(nodeId, e.shiftKey);
+                    document.body.classList.add('dragging');
+                }
             }
             return;
         }
@@ -133,15 +159,41 @@ export class InteractionHandler {
             return;
         }
 
-        // Click on empty canvas - clear selection
-        this.app.clearSelection();
+        // Start marquee selection on empty canvas
+        if (!e.shiftKey) {
+            this.app.clearSelection();
+        }
+        this.isMarqueeSelecting = true;
+        this.marqueeStartPos = worldPos;
+        this.createMarqueeRect(worldPos);
+        document.body.classList.add('selecting');
     }
 
     private handleMouseMove(e: MouseEvent): void {
         const worldPos = this.getWorldPosition(e);
         const target = e.target as SVGElement;
 
-        // Handle node dragging
+        // Handle multi-node dragging
+        if (this.isMultiDragging && this.multiDragOffsets.size > 0) {
+            e.preventDefault();
+            const settings = this.app.getSettings() ?? { snapToGrid: true, gridSize: 20 };
+
+            for (const [nodeId, offset] of this.multiDragOffsets) {
+                let newX = worldPos.x - offset.x;
+                let newY = worldPos.y - offset.y;
+
+                if (settings.snapToGrid) {
+                    const gridSize = settings.gridSize || 20;
+                    newX = Math.round(newX / gridSize) * gridSize;
+                    newY = Math.round(newY / gridSize) * gridSize;
+                }
+
+                this.app.moveNode(nodeId, { x: newX, y: newY });
+            }
+            return;
+        }
+
+        // Handle single node dragging
         if (this.isDragging && this.dragNodeId) {
             e.preventDefault();
 
@@ -157,6 +209,14 @@ export class InteractionHandler {
             }
 
             this.app.moveNode(this.dragNodeId, { x: newX, y: newY });
+            return;
+        }
+
+        // Handle marquee selection
+        if (this.isMarqueeSelecting && this.marqueeStartPos && this.marqueeRect) {
+            e.preventDefault();
+            this.updateMarqueeRect(worldPos);
+            this.selectNodesInMarquee();
             return;
         }
 
@@ -189,10 +249,26 @@ export class InteractionHandler {
     private handleMouseUp(e: MouseEvent): void {
         const target = e.target as SVGElement;
 
-        // Complete node drag
+        // Complete multi-node drag
+        if (this.isMultiDragging) {
+            this.app.moveNodeComplete();
+            document.body.classList.remove('dragging');
+            this.isMultiDragging = false;
+            this.multiDragOffsets.clear();
+        }
+
+        // Complete single node drag
         if (this.isDragging && this.dragNodeId) {
             this.app.moveNodeComplete();
             document.body.classList.remove('dragging');
+        }
+
+        // Complete marquee selection
+        if (this.isMarqueeSelecting) {
+            this.removeMarqueeRect();
+            document.body.classList.remove('selecting');
+            this.isMarqueeSelecting = false;
+            this.marqueeStartPos = null;
         }
 
         // Complete connection
@@ -242,6 +318,14 @@ export class InteractionHandler {
             document.body.classList.remove('connecting');
             this.isConnecting = false;
             this.connectionStart = null;
+        }
+
+        // Cancel marquee selection
+        if (this.isMarqueeSelecting) {
+            this.removeMarqueeRect();
+            document.body.classList.remove('selecting');
+            this.isMarqueeSelecting = false;
+            this.marqueeStartPos = null;
         }
     }
 
@@ -357,5 +441,87 @@ export class InteractionHandler {
         document.querySelectorAll('.port-hover').forEach((port) => {
             port.classList.remove('port-hover');
         });
+    }
+
+    // Marquee selection methods
+    private createMarqueeRect(startPos: Position): void {
+        const overlayGroup = document.getElementById('canvas-overlay');
+        if (!overlayGroup) { return; }
+
+        const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        rect.setAttribute('class', 'marquee-selection');
+        rect.setAttribute('x', String(startPos.x));
+        rect.setAttribute('y', String(startPos.y));
+        rect.setAttribute('width', '0');
+        rect.setAttribute('height', '0');
+        rect.setAttribute('fill', 'var(--color-primary)');
+        rect.setAttribute('fill-opacity', '0.1');
+        rect.setAttribute('stroke', 'var(--color-primary)');
+        rect.setAttribute('stroke-width', '1');
+        rect.setAttribute('stroke-dasharray', '4 2');
+
+        overlayGroup.appendChild(rect);
+        this.marqueeRect = rect;
+    }
+
+    private updateMarqueeRect(currentPos: Position): void {
+        if (!this.marqueeRect || !this.marqueeStartPos) { return; }
+
+        const x = Math.min(this.marqueeStartPos.x, currentPos.x);
+        const y = Math.min(this.marqueeStartPos.y, currentPos.y);
+        const width = Math.abs(currentPos.x - this.marqueeStartPos.x);
+        const height = Math.abs(currentPos.y - this.marqueeStartPos.y);
+
+        this.marqueeRect.setAttribute('x', String(x));
+        this.marqueeRect.setAttribute('y', String(y));
+        this.marqueeRect.setAttribute('width', String(width));
+        this.marqueeRect.setAttribute('height', String(height));
+    }
+
+    private removeMarqueeRect(): void {
+        if (this.marqueeRect) {
+            this.marqueeRect.remove();
+            this.marqueeRect = null;
+        }
+    }
+
+    private selectNodesInMarquee(): void {
+        if (!this.marqueeRect || !this.marqueeStartPos) { return; }
+
+        const doc = this.app.getDocument();
+        if (!doc) { return; }
+
+        const x = parseFloat(this.marqueeRect.getAttribute('x') || '0');
+        const y = parseFloat(this.marqueeRect.getAttribute('y') || '0');
+        const width = parseFloat(this.marqueeRect.getAttribute('width') || '0');
+        const height = parseFloat(this.marqueeRect.getAttribute('height') || '0');
+
+        const marqueeRight = x + width;
+        const marqueeBottom = y + height;
+
+        // Clear previous selection and select nodes within the marquee
+        this.app.clearSelection();
+
+        for (const node of doc.nodes) {
+            // Skip locked or hidden layers
+            if (this.app.isLayerLocked(node.layerId) || !this.app.isLayerVisible(node.layerId)) {
+                continue;
+            }
+
+            const nodeRight = node.position.x + node.size.width;
+            const nodeBottom = node.position.y + node.size.height;
+
+            // Check if node intersects with marquee
+            const intersects = !(
+                node.position.x > marqueeRight ||
+                nodeRight < x ||
+                node.position.y > marqueeBottom ||
+                nodeBottom < y
+            );
+
+            if (intersects) {
+                this.app.selectNode(node.id, true);
+            }
+        }
     }
 }
