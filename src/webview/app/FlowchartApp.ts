@@ -8,7 +8,7 @@ import { NodeRenderer } from './NodeRenderer';
 import { EdgeRenderer } from './EdgeRenderer';
 import { InteractionHandler } from './InteractionHandler';
 import { Minimap } from './Minimap';
-import type { FlowchartDocument, FlowNode, FlowEdge, NodeType, Position } from '../../types';
+import type { FlowchartDocument, FlowNode, FlowEdge, NodeType, NodeStyle, Port, EdgeStyle, EdgeType, Position } from '../../types';
 
 interface VSCodeAPI {
     postMessage(message: unknown): void;
@@ -306,7 +306,7 @@ export class FlowchartApp {
         };
     }
 
-    private createPorts(type: NodeType): FlowNode['ports'] {
+    private createPorts(_type: NodeType): FlowNode['ports'] {
         const portConfigs = [
             { position: 'top' as const, offset: 0.5 },
             { position: 'right' as const, offset: 0.5 },
@@ -558,8 +558,8 @@ export class FlowchartApp {
         );
 
         this.clipboard = {
-            nodes: JSON.parse(JSON.stringify(nodes)),
-            edges: JSON.parse(JSON.stringify(edges)),
+            nodes: JSON.parse(JSON.stringify(nodes)) as FlowNode[],
+            edges: JSON.parse(JSON.stringify(edges)) as FlowEdge[],
         };
 
         this.showToast('Copied to clipboard', 'info');
@@ -716,7 +716,7 @@ export class FlowchartApp {
         });
 
         content.querySelectorAll('.layer-item').forEach(el => {
-            el.addEventListener('click', (e) => {
+            el.addEventListener('click', (_e) => {
                 const id = el.getAttribute('data-layer-id')!;
                 this.activeLayerId = id;
                 this.renderLayersPanel();
@@ -873,7 +873,7 @@ export class FlowchartApp {
             const target = e.target as HTMLElement;
             const type = target.dataset.align;
             if (type) {
-                this.alignSelectedNodes(type as any);
+                this.alignSelectedNodes(type as 'top' | 'right' | 'bottom' | 'left' | 'center' | 'middle');
                 toolbar.remove();
             }
         });
@@ -942,7 +942,7 @@ export class FlowchartApp {
         // Attach listeners
         document.getElementById('setting-theme')?.addEventListener('change', (e) => {
             const theme = (e.target as HTMLSelectElement).value;
-            this.document!.settings.theme = theme as any;
+            this.document!.settings.theme = theme as 'light' | 'dark' | 'auto';
             this.applyTheme(theme);
             this.vscode.postMessage({ type: 'theme', payload: { theme } });
         });
@@ -1827,6 +1827,8 @@ export class FlowchartApp {
             opacity: 1
         });
 
+        const now = Date.now();
+
         const createEdge = (srcNode: string, srcPort: string, tgtNode: string, tgtPort: string, edgeType: EdgeType = 'bezier'): FlowEdge => ({
             id: uuid(),
             type: edgeType,
@@ -1836,6 +1838,43 @@ export class FlowchartApp {
             style: defaultEdgeStyle(),
             sourceArrow: 'none',
             targetArrow: 'arrow',
+            metadata: { createdAt: now, updatedAt: now, zIndex: 0 }
+        });
+
+        const defaultNodeStyle = (bg: string, border: string, text: string): NodeStyle => ({
+            backgroundColor: bg,
+            borderColor: border,
+            borderWidth: 2,
+            borderRadius: 8,
+            textColor: text,
+            fontSize: 14,
+            fontFamily: 'Inter, sans-serif',
+            fontWeight: 'normal',
+            textAlign: 'center',
+            opacity: 1,
+            shadow: true
+        });
+
+        const createNode = (
+            id: string,
+            type: NodeType,
+            x: number,
+            y: number,
+            w: number,
+            h: number,
+            label: string,
+            bg: string,
+            border: string,
+            text: string
+        ): FlowNode => ({
+            id,
+            type,
+            position: { x, y },
+            size: { width: w, height: h },
+            data: { label },
+            style: defaultNodeStyle(bg, border, text),
+            ports: getPorts(),
+            metadata: { createdAt: now, updatedAt: now, locked: false, visible: true, zIndex: 0 }
         });
 
         const nodes: FlowNode[] = [];
@@ -1854,9 +1893,9 @@ export class FlowchartApp {
             const idEnd = uuid();
 
             nodes.push(
-                { id: idStart, type: 'oval', position: { x: cx - 70, y: cy - 150 }, size: { width: 140, height: 60 }, data: { label: 'Start' }, style: { backgroundColor: defaults.startBg, borderColor: defaults.startBorder, textColor: defaults.textColor }, ports: getPorts(), metadata: { locked: false, visible: true, zIndex: 0 } },
-                { id: idStep, type: 'rectangle', position: { x: cx - 80, y: cy - 40 }, size: { width: 160, height: 80 }, data: { label: 'Process' }, style: { backgroundColor: defaults.procBg, borderColor: defaults.procBorder, textColor: defaults.procText }, ports: getPorts(), metadata: { locked: false, visible: true, zIndex: 0 } },
-                { id: idEnd, type: 'oval', position: { x: cx - 70, y: cy + 90 }, size: { width: 140, height: 60 }, data: { label: 'End' }, style: { backgroundColor: defaults.endBg, borderColor: defaults.endBorder, textColor: defaults.textColor }, ports: getPorts(), metadata: { locked: false, visible: true, zIndex: 0 } }
+                createNode(idStart, 'oval', cx - 70, cy - 150, 140, 60, 'Start', defaults.startBg, defaults.startBorder, defaults.textColor),
+                createNode(idStep, 'rectangle', cx - 80, cy - 40, 160, 80, 'Process', defaults.procBg, defaults.procBorder, defaults.procText),
+                createNode(idEnd, 'oval', cx - 70, cy + 90, 140, 60, 'End', defaults.endBg, defaults.endBorder, defaults.textColor)
             );
 
             edges.push(
@@ -1871,11 +1910,11 @@ export class FlowchartApp {
             const idEnd = uuid();
 
             nodes.push(
-                { id: idStart, type: 'oval', position: { x: cx - 70, y: cy - 220 }, size: { width: 140, height: 60 }, data: { label: 'Start' }, style: { backgroundColor: defaults.startBg, borderColor: defaults.startBorder, textColor: defaults.textColor }, ports: getPorts(), metadata: { locked: false, visible: true, zIndex: 0 } },
-                { id: idDec, type: 'diamond', position: { x: cx - 80, y: cy - 100 }, size: { width: 160, height: 100 }, data: { label: 'Check?' }, style: { backgroundColor: defaults.decBg, borderColor: defaults.decBorder, textColor: defaults.decText }, ports: getPorts(), metadata: { locked: false, visible: true, zIndex: 0 } },
-                { id: idYes, type: 'rectangle', position: { x: cx - 300, y: cy + 60 }, size: { width: 160, height: 80 }, data: { label: 'Yes' }, style: { backgroundColor: '#dcfce7', borderColor: '#22c55e', textColor: '#166534' }, ports: getPorts(), metadata: { locked: false, visible: true, zIndex: 0 } },
-                { id: idNo, type: 'rectangle', position: { x: cx + 140, y: cy + 60 }, size: { width: 160, height: 80 }, data: { label: 'No' }, style: { backgroundColor: '#fee2e2', borderColor: '#ef4444', textColor: '#991b1b' }, ports: getPorts(), metadata: { locked: false, visible: true, zIndex: 0 } },
-                { id: idEnd, type: 'oval', position: { x: cx - 70, y: cy + 220 }, size: { width: 140, height: 60 }, data: { label: 'End' }, style: { backgroundColor: defaults.endBg, borderColor: defaults.endBorder, textColor: defaults.textColor }, ports: getPorts(), metadata: { locked: false, visible: true, zIndex: 0 } }
+                createNode(idStart, 'oval', cx - 70, cy - 220, 140, 60, 'Start', defaults.startBg, defaults.startBorder, defaults.textColor),
+                createNode(idDec, 'diamond', cx - 80, cy - 100, 160, 100, 'Check?', defaults.decBg, defaults.decBorder, defaults.decText),
+                createNode(idYes, 'rectangle', cx - 300, cy + 60, 160, 80, 'Yes', '#dcfce7', '#22c55e', '#166534'),
+                createNode(idNo, 'rectangle', cx + 140, cy + 60, 160, 80, 'No', '#fee2e2', '#ef4444', '#991b1b'),
+                createNode(idEnd, 'oval', cx - 70, cy + 220, 140, 60, 'End', defaults.endBg, defaults.endBorder, defaults.textColor)
             );
 
             edges.push(
@@ -1892,10 +1931,10 @@ export class FlowchartApp {
             const idTask2 = uuid();
 
             nodes.push(
-                { id: idLane1, type: 'rectangle', position: { x: cx - 200, y: cy - 100 }, size: { width: 180, height: 200 }, data: { label: 'Lane 1' }, style: { backgroundColor: '#f1f5f9', borderColor: '#cbd5e1', textColor: '#334155' }, ports: getPorts(), metadata: { locked: false, visible: true, zIndex: 0 } },
-                { id: idLane2, type: 'rectangle', position: { x: cx + 20, y: cy - 100 }, size: { width: 180, height: 200 }, data: { label: 'Lane 2' }, style: { backgroundColor: '#f1f5f9', borderColor: '#cbd5e1', textColor: '#334155' }, ports: getPorts(), metadata: { locked: false, visible: true, zIndex: 0 } },
-                { id: idTask1, type: 'rectangle', position: { x: cx - 175, y: cy - 30 }, size: { width: 130, height: 60 }, data: { label: 'Task A' }, style: { backgroundColor: defaults.procBg, borderColor: defaults.procBorder, textColor: defaults.procText }, ports: getPorts(), metadata: { locked: false, visible: true, zIndex: 1 } },
-                { id: idTask2, type: 'rectangle', position: { x: cx + 45, y: cy - 30 }, size: { width: 130, height: 60 }, data: { label: 'Task B' }, style: { backgroundColor: defaults.procBg, borderColor: defaults.procBorder, textColor: defaults.procText }, ports: getPorts(), metadata: { locked: false, visible: true, zIndex: 1 } }
+                createNode(idLane1, 'rectangle', cx - 200, cy - 100, 180, 200, 'Lane 1', '#f1f5f9', '#cbd5e1', '#334155'),
+                createNode(idLane2, 'rectangle', cx + 20, cy - 100, 180, 200, 'Lane 2', '#f1f5f9', '#cbd5e1', '#334155'),
+                createNode(idTask1, 'rectangle', cx - 175, cy - 30, 130, 60, 'Task A', defaults.procBg, defaults.procBorder, defaults.procText),
+                createNode(idTask2, 'rectangle', cx + 45, cy - 30, 130, 60, 'Task B', defaults.procBg, defaults.procBorder, defaults.procText)
             );
 
             edges.push(
@@ -1907,9 +1946,9 @@ export class FlowchartApp {
             const idMgr2 = uuid();
 
             nodes.push(
-                { id: idCeo, type: 'rectangle', position: { x: cx - 60, y: cy - 100 }, size: { width: 120, height: 50 }, data: { label: 'CEO' }, style: { backgroundColor: defaults.startBg, borderColor: defaults.startBorder, textColor: '#ffffff' }, ports: getPorts(), metadata: { locked: false, visible: true, zIndex: 0 } },
-                { id: idMgr1, type: 'rectangle', position: { x: cx - 150, y: cy + 20 }, size: { width: 120, height: 50 }, data: { label: 'Manager A' }, style: { backgroundColor: defaults.procBg, borderColor: defaults.procBorder, textColor: defaults.procText }, ports: getPorts(), metadata: { locked: false, visible: true, zIndex: 0 } },
-                { id: idMgr2, type: 'rectangle', position: { x: cx + 30, y: cy + 20 }, size: { width: 120, height: 50 }, data: { label: 'Manager B' }, style: { backgroundColor: defaults.procBg, borderColor: defaults.procBorder, textColor: defaults.procText }, ports: getPorts(), metadata: { locked: false, visible: true, zIndex: 0 } }
+                createNode(idCeo, 'rectangle', cx - 60, cy - 100, 120, 50, 'CEO', defaults.startBg, defaults.startBorder, '#ffffff'),
+                createNode(idMgr1, 'rectangle', cx - 150, cy + 20, 120, 50, 'Manager A', defaults.procBg, defaults.procBorder, defaults.procText),
+                createNode(idMgr2, 'rectangle', cx + 30, cy + 20, 120, 50, 'Manager B', defaults.procBg, defaults.procBorder, defaults.procText)
             );
 
             edges.push(

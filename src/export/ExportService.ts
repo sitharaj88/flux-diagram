@@ -2,7 +2,7 @@
  * Export Service - Handles exporting flowcharts to various formats
  */
 
-import type { FlowchartDocument, FlowNode, FlowEdge, ExportFormat } from '../types';
+import type { FlowchartDocument, FlowNode, ExportFormat } from '../types';
 
 export interface ExportResult {
     format: ExportFormat;
@@ -117,15 +117,17 @@ export class ExportService {
         switch (type) {
             case 'straight':
                 return `M ${start.x} ${start.y} L ${end.x} ${end.y}`;
-            case 'step':
+            case 'step': {
                 const midX = (start.x + end.x) / 2;
                 return `M ${start.x} ${start.y} L ${midX} ${start.y} L ${midX} ${end.y} L ${end.x} ${end.y}`;
-            default: // bezier
+            }
+            default: { // bezier
                 const cx1 = start.x + (end.x - start.x) / 2;
                 const cy1 = start.y;
                 const cx2 = start.x + (end.x - start.x) / 2;
                 const cy2 = end.y;
                 return `M ${start.x} ${start.y} C ${cx1} ${cy1}, ${cx2} ${cy2}, ${end.x} ${end.y}`;
+            }
         }
     }
 
@@ -135,17 +137,19 @@ export class ExportService {
 
         // Background shape
         switch (type) {
-            case 'diamond':
+            case 'diamond': {
                 const hw = size.width / 2, hh = size.height / 2;
                 svg += `    <polygon points="${position.x + hw},${position.y} ${position.x + size.width},${position.y + hh} ${position.x + hw},${position.y + size.height} ${position.x},${position.y + hh}" `;
                 break;
+            }
             case 'oval':
                 svg += `    <ellipse cx="${position.x + size.width / 2}" cy="${position.y + size.height / 2}" rx="${size.width / 2}" ry="${size.height / 2}" `;
                 break;
-            case 'parallelogram':
+            case 'parallelogram': {
                 const skew = size.width * 0.2;
                 svg += `    <polygon points="${position.x + skew},${position.y} ${position.x + size.width},${position.y} ${position.x + size.width - skew},${position.y + size.height} ${position.x},${position.y + size.height}" `;
                 break;
+            }
             default:
                 svg += `    <rect x="${position.x}" y="${position.y}" width="${size.width}" height="${size.height}" rx="${style.borderRadius}" `;
         }
@@ -172,14 +176,14 @@ export class ExportService {
      * Note: This requires browser canvas support
      */
     static async toPNG(
-        document: FlowchartDocument,
+        flowchartDoc: FlowchartDocument,
         options: { scale?: number; backgroundColor?: string } = {}
     ): Promise<ExportResult> {
         const scale = options.scale ?? 2;
         const backgroundColor = options.backgroundColor ?? '#ffffff';
 
         // First generate SVG
-        const svgResult = this.toSVG(document, { backgroundColor });
+        const svgResult = this.toSVG(flowchartDoc, { backgroundColor });
 
         // Convert SVG to PNG using canvas (browser only)
         const canvas = document.createElement('canvas') as unknown as HTMLCanvasElement;
@@ -214,7 +218,7 @@ export class ExportService {
                     format: 'png',
                     data: dataUrl,
                     mimeType: 'image/png',
-                    filename: `${document.metadata.name}.png`,
+                    filename: `${flowchartDoc.metadata.name}.png`,
                 });
             };
             img.onerror = reject;

@@ -82,64 +82,64 @@ export function activate(context: vscode.ExtensionContext): void {
     );
 
     context.subscriptions.push(
-        vscode.commands.registerCommand('flowchartBuilder.exportPNG', async () => {
+        vscode.commands.registerCommand('flowchartBuilder.exportPNG', () => {
             const panel = provider.getActivePanel();
             if (panel) {
-                panel.webview.postMessage({ type: 'export', payload: { format: 'png' } });
+                void panel.webview.postMessage({ type: 'export', payload: { format: 'png' } });
             }
         })
     );
 
     context.subscriptions.push(
-        vscode.commands.registerCommand('flowchartBuilder.exportSVG', async () => {
+        vscode.commands.registerCommand('flowchartBuilder.exportSVG', () => {
             const panel = provider.getActivePanel();
             if (panel) {
-                panel.webview.postMessage({ type: 'export', payload: { format: 'svg' } });
+                void panel.webview.postMessage({ type: 'export', payload: { format: 'svg' } });
             }
         })
     );
 
     context.subscriptions.push(
-        vscode.commands.registerCommand('flowchartBuilder.exportJSON', async () => {
+        vscode.commands.registerCommand('flowchartBuilder.exportJSON', () => {
             const panel = provider.getActivePanel();
             if (panel) {
-                panel.webview.postMessage({ type: 'export', payload: { format: 'json' } });
+                void panel.webview.postMessage({ type: 'export', payload: { format: 'json' } });
             }
         })
     );
 
     context.subscriptions.push(
-        vscode.commands.registerCommand('flowchartBuilder.autoLayout', async () => {
+        vscode.commands.registerCommand('flowchartBuilder.autoLayout', () => {
             const panel = provider.getActivePanel();
             if (panel) {
-                panel.webview.postMessage({ type: 'layout', payload: { type: 'hierarchical' } });
+                void panel.webview.postMessage({ type: 'layout', payload: { type: 'hierarchical' } });
             }
         })
     );
 
     context.subscriptions.push(
-        vscode.commands.registerCommand('flowchartBuilder.zoomIn', async () => {
+        vscode.commands.registerCommand('flowchartBuilder.zoomIn', () => {
             const panel = provider.getActivePanel();
             if (panel) {
-                panel.webview.postMessage({ type: 'zoom', payload: { direction: 'in' } });
+                void panel.webview.postMessage({ type: 'zoom', payload: { direction: 'in' } });
             }
         })
     );
 
     context.subscriptions.push(
-        vscode.commands.registerCommand('flowchartBuilder.zoomOut', async () => {
+        vscode.commands.registerCommand('flowchartBuilder.zoomOut', () => {
             const panel = provider.getActivePanel();
             if (panel) {
-                panel.webview.postMessage({ type: 'zoom', payload: { direction: 'out' } });
+                void panel.webview.postMessage({ type: 'zoom', payload: { direction: 'out' } });
             }
         })
     );
 
     context.subscriptions.push(
-        vscode.commands.registerCommand('flowchartBuilder.fitToView', async () => {
+        vscode.commands.registerCommand('flowchartBuilder.fitToView', () => {
             const panel = provider.getActivePanel();
             if (panel) {
-                panel.webview.postMessage({ type: 'zoom', payload: { direction: 'fit' } });
+                void panel.webview.postMessage({ type: 'zoom', payload: { direction: 'fit' } });
             }
         })
     );
@@ -149,7 +149,7 @@ export function activate(context: vscode.ExtensionContext): void {
         vscode.commands.registerCommand('flowchartBuilder.createFromTemplate', async (templateId: string) => {
             const template = getTemplate(templateId);
             if (!template) {
-                vscode.window.showErrorMessage(`Template "${templateId}" not found`);
+                void vscode.window.showErrorMessage(`Template "${templateId}" not found`);
                 return;
             }
 
@@ -172,13 +172,13 @@ export function activate(context: vscode.ExtensionContext): void {
     // Template shortcut commands
     context.subscriptions.push(
         vscode.commands.registerCommand('flowchartBuilder.templateProcess', () => {
-            vscode.commands.executeCommand('flowchartBuilder.createFromTemplate', 'process');
+            void vscode.commands.executeCommand('flowchartBuilder.createFromTemplate', 'process');
         }),
         vscode.commands.registerCommand('flowchartBuilder.templateDecision', () => {
-            vscode.commands.executeCommand('flowchartBuilder.createFromTemplate', 'decision');
+            void vscode.commands.executeCommand('flowchartBuilder.createFromTemplate', 'decision');
         }),
         vscode.commands.registerCommand('flowchartBuilder.templateSwimlane', () => {
-            vscode.commands.executeCommand('flowchartBuilder.createFromTemplate', 'swimlane');
+            void vscode.commands.executeCommand('flowchartBuilder.createFromTemplate', 'swimlane');
         })
     );
 

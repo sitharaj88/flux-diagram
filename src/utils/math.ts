@@ -2,7 +2,7 @@
  * Math and geometry utilities
  */
 
-import type { Position, Bounds, Size } from '@types/index';
+import type { Position, Bounds } from '@types/index';
 
 /**
  * Clamps a value between min and max
@@ -180,7 +180,7 @@ export function rotatePoint(point: Position, center: Position, angleRad: number)
 export function calculateBezierControlPoints(
     start: Position,
     end: Position,
-    curvature = 0.5
+    _curvature = 0.5
 ): [Position, Position] {
     const dx = end.x - start.x;
     const dy = end.y - start.y;

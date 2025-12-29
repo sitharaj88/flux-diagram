@@ -144,7 +144,7 @@ export class EdgeRenderer {
                 return path.join(' ');
             }
 
-            default: // bezier
+            default: { // bezier
                 const dist = Math.sqrt(Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2));
                 const controlDist = Math.min(dist * 0.5, 150);
 
@@ -172,6 +172,7 @@ export class EdgeRenderer {
                 }
 
                 return `M ${start.x} ${start.y} C ${cp1.x} ${cp1.y}, ${cp2.x} ${cp2.y}, ${end.x} ${end.y}`;
+            }
         }
     }
 

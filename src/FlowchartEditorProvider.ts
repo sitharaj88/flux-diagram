@@ -16,6 +16,7 @@ export class FlowchartEditorProvider implements vscode.CustomTextEditorProvider 
     return this.activePanel;
   }
 
+  // eslint-disable-next-line @typescript-eslint/require-await
   async resolveCustomTextEditor(
     document: vscode.TextDocument,
     webviewPanel: vscode.WebviewPanel,
@@ -44,7 +45,7 @@ export class FlowchartEditorProvider implements vscode.CustomTextEditorProvider 
 
     // Theme change subscription
     const themeSubscription = vscode.window.onDidChangeActiveColorTheme(() => {
-      webviewPanel.webview.postMessage({
+      void webviewPanel.webview.postMessage({
         type: 'theme',
         payload: {
           kind: vscode.window.activeColorTheme.kind,
@@ -61,8 +62,8 @@ export class FlowchartEditorProvider implements vscode.CustomTextEditorProvider 
     });
 
     // Handle messages from webview
-    webviewPanel.webview.onDidReceiveMessage(async (message) => {
-      await this.handleMessage(message, document);
+    webviewPanel.webview.onDidReceiveMessage((message: unknown) => {
+      void this.handleMessage(message as { type: string; payload: unknown; requestId?: string }, document);
     });
 
     // Clean up on dispose
@@ -82,16 +83,16 @@ export class FlowchartEditorProvider implements vscode.CustomTextEditorProvider 
     // Get URIs for scripts and styles
     const scriptUri = webview.asWebviewUri(
       vscode.Uri.joinPath(this.context.extensionUri, 'dist', 'webview', 'main.js')
-    );
+    ).toString();
     const styleUri = webview.asWebviewUri(
       vscode.Uri.joinPath(this.context.extensionUri, 'dist', 'webview', 'styles', 'main.css')
-    );
+    ).toString();
     const themesUri = webview.asWebviewUri(
       vscode.Uri.joinPath(this.context.extensionUri, 'dist', 'webview', 'styles', 'themes.css')
-    );
+    ).toString();
     const componentsUri = webview.asWebviewUri(
       vscode.Uri.joinPath(this.context.extensionUri, 'dist', 'webview', 'styles', 'components.css')
-    );
+    ).toString();
 
     // Use a nonce for content security
     const nonce = this.getNonce();
@@ -465,14 +466,14 @@ export class FlowchartEditorProvider implements vscode.CustomTextEditorProvider 
   private updateWebview(webview: vscode.Webview, document: vscode.TextDocument): void {
     try {
       const content = document.getText();
-      const data = content ? JSON.parse(content) : null;
-      webview.postMessage({
+      const data = content ? JSON.parse(content) as unknown : null;
+      void webview.postMessage({
         type: 'load',
         payload: data,
       });
     } catch (error) {
       console.error('Failed to parse flowchart document:', error);
-      webview.postMessage({
+      void webview.postMessage({
         type: 'error',
         payload: { message: 'Failed to parse flowchart document' },
       });
@@ -499,7 +500,7 @@ export class FlowchartEditorProvider implements vscode.CustomTextEditorProvider 
       case 'command': {
         const payload = message.payload as { command: string };
         if (payload.command === 'newFlowchart') {
-          vscode.commands.executeCommand('flowchartBuilder.newFlowchart');
+          void vscode.commands.executeCommand('flowchartBuilder.newFlowchart');
         }
         break;
       }
@@ -514,13 +515,13 @@ export class FlowchartEditorProvider implements vscode.CustomTextEditorProvider 
         const payload = message.payload as { type: 'info' | 'warn' | 'error'; message: string };
         switch (payload.type) {
           case 'info':
-            vscode.window.showInformationMessage(payload.message);
+            void vscode.window.showInformationMessage(payload.message);
             break;
           case 'warn':
-            vscode.window.showWarningMessage(payload.message);
+            void vscode.window.showWarningMessage(payload.message);
             break;
           case 'error':
-            vscode.window.showErrorMessage(payload.message);
+            void vscode.window.showErrorMessage(payload.message);
             break;
         }
         break;
@@ -552,7 +553,7 @@ export class FlowchartEditorProvider implements vscode.CustomTextEditorProvider 
         uri,
         typeof content === 'string' ? Buffer.from(content) : content
       );
-      vscode.window.showInformationMessage(`Exported to ${uri.fsPath}`);
+      void vscode.window.showInformationMessage(`Exported to ${uri.fsPath}`);
     }
   }
 }
