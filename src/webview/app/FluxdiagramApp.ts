@@ -196,24 +196,33 @@ export class FluxdiagramApp {
 
     private saveTimeout: number | null = null;
 
-    private saveDocument(): void {
+    private saveDocument(immediate = false): void {
         if (!this.document) { return; }
 
         this.document.metadata.updatedAt = Date.now();
         this.document.viewport = this.canvas.getViewport();
 
-        // Debounce save to avoid UI lag
+        // Clear any pending debounced save
         if (this.saveTimeout) {
             window.clearTimeout(this.saveTimeout);
+            this.saveTimeout = null;
         }
 
-        this.saveTimeout = window.setTimeout(() => {
+        const doSave = () => {
             this.vscode.postMessage({
                 type: 'save',
                 payload: this.document,
             });
             this.isDirty = false;
-        }, 500);
+        };
+
+        if (immediate) {
+            // Immediate save for keyboard shortcut (Cmd+S)
+            doSave();
+        } else {
+            // Debounce save to avoid UI lag for auto-saves
+            this.saveTimeout = window.setTimeout(doSave, 500);
+        }
     }
 
     private pushHistory(): void {
@@ -714,7 +723,7 @@ export class FluxdiagramApp {
         });
 
         document.getElementById('menu-save')?.addEventListener('click', () => {
-            this.saveDocument();
+            this.saveDocument(true); // Immediate save for explicit user action
         });
 
         document.getElementById('menu-export')?.addEventListener('click', () => {
@@ -1321,7 +1330,7 @@ export class FluxdiagramApp {
                 this.redo();
             } else if (isMod && e.key === 's') {
                 e.preventDefault();
-                this.saveDocument();
+                this.saveDocument(true); // Immediate save for keyboard shortcut
             } else if (isMod && e.key === 'c') {
                 e.preventDefault();
                 this.copy();

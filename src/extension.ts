@@ -26,14 +26,8 @@ export function activate(context: vscode.ExtensionContext): void {
     // Register sidebar tree views
     const sidebarProviders = registerSidebarProviders(context);
 
-    // Track opened fluxdiagram files for Recent panel
-    context.subscriptions.push(
-        vscode.window.onDidChangeActiveTextEditor((editor) => {
-            if (editor?.document.fileName.endsWith('.fluxdiagram')) {
-                sidebarProviders.recent.addRecent(editor.document.uri);
-            }
-        })
-    );
+    // Set the recent provider on the editor provider to track opened files
+    provider.setRecentProvider(sidebarProviders.recent);
 
     // Register commands
     context.subscriptions.push(

@@ -2,7 +2,7 @@
   "name": "flux-diagram",
   "displayName": "FluxDiagram",
   "description": "Advanced fluxdiagram builder with modern UI and support for large diagrams",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "publisher": "sitharaj",
   "repository": {
     "type": "git",

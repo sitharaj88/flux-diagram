@@ -1,1 +1,1 @@
-export { FlowchartsProvider, TemplatesProvider, RecentProvider, registerSidebarProviders } from './SidebarProviders';
+export { FluxdiagramsProvider, TemplatesProvider, RecentProvider, registerSidebarProviders } from './SidebarProviders';

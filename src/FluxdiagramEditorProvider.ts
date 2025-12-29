@@ -4,14 +4,21 @@
 
 import * as vscode from 'vscode';
 import * as path from 'path';
+import type { RecentProvider } from './sidebar';
 
 export class FluxdiagramEditorProvider implements vscode.CustomTextEditorProvider {
   public static readonly viewType = 'fluxDiagram.editor';
 
   private activePanel: vscode.WebviewPanel | undefined;
   private isSaving = false;
+  private pendingDocumentContent: Map<string, string> = new Map();
+  private recentProvider: RecentProvider | undefined;
 
   constructor(private readonly context: vscode.ExtensionContext) { }
+
+  public setRecentProvider(provider: RecentProvider): void {
+    this.recentProvider = provider;
+  }
 
   public getActivePanel(): vscode.WebviewPanel | undefined {
     return this.activePanel;
@@ -24,6 +31,11 @@ export class FluxdiagramEditorProvider implements vscode.CustomTextEditorProvide
     _token: vscode.CancellationToken
   ): Promise<void> {
     this.activePanel = webviewPanel;
+
+    // Track this file in recent files
+    if (this.recentProvider) {
+      this.recentProvider.addRecent(document.uri);
+    }
 
     // Setup webview
     webviewPanel.webview.options = {
@@ -41,7 +53,38 @@ export class FluxdiagramEditorProvider implements vscode.CustomTextEditorProvide
     const changeDocumentSubscription = vscode.workspace.onDidChangeTextDocument((e) => {
       if (e.document.uri.toString() === document.uri.toString()) {
         if (this.isSaving) { return; }
+        // Don't reload from disk if we have pending content from webview
+        if (this.pendingDocumentContent.has(document.uri.toString())) { return; }
         this.updateWebview(webviewPanel.webview, document);
+      }
+    });
+
+    // Handle save to ensure webview content is persisted
+    const willSaveSubscription = vscode.workspace.onWillSaveTextDocument((e) => {
+      if (e.document.uri.toString() === document.uri.toString()) {
+        const pendingContent = this.pendingDocumentContent.get(document.uri.toString());
+        if (pendingContent) {
+          // Apply pending content before save
+          const edit = new vscode.WorkspaceEdit();
+          edit.replace(
+            document.uri,
+            new vscode.Range(0, 0, document.lineCount, 0),
+            pendingContent
+          );
+          this.isSaving = true;
+          e.waitUntil(
+            vscode.workspace.applyEdit(edit).then(() => {
+              this.isSaving = false;
+            })
+          );
+        }
+      }
+    });
+
+    // Clear pending content after save completes
+    const didSaveSubscription = vscode.workspace.onDidSaveTextDocument((savedDoc) => {
+      if (savedDoc.uri.toString() === document.uri.toString()) {
+        this.pendingDocumentContent.delete(document.uri.toString());
       }
     });
 
@@ -73,7 +116,10 @@ export class FluxdiagramEditorProvider implements vscode.CustomTextEditorProvide
       if (this.activePanel === webviewPanel) {
         this.activePanel = undefined;
       }
+      this.pendingDocumentContent.delete(document.uri.toString());
       changeDocumentSubscription.dispose();
+      willSaveSubscription.dispose();
+      didSaveSubscription.dispose();
       themeSubscription.dispose();
     });
 
@@ -508,6 +554,8 @@ export class FluxdiagramEditorProvider implements vscode.CustomTextEditorProvide
     switch (message.type) {
       case 'save': {
         const content = JSON.stringify(message.payload, null, 2);
+        // Store pending content so it's available for VS Code save
+        this.pendingDocumentContent.set(document.uri.toString(), content);
         const edit = new vscode.WorkspaceEdit();
         edit.replace(
           document.uri,
@@ -517,6 +565,8 @@ export class FluxdiagramEditorProvider implements vscode.CustomTextEditorProvide
         this.isSaving = true;
         try {
           await vscode.workspace.applyEdit(edit);
+          // Clear pending content after successful apply
+          this.pendingDocumentContent.delete(document.uri.toString());
         } finally {
           this.isSaving = false;
         }

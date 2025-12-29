@@ -25,7 +25,7 @@ class FluxdiagramItem extends vscode.TreeItem {
     }
 }
 
-// Fluxdiagrams Tree Data Provider
+// Fluxdiagrams Tree Data Provider - Always shows welcome buttons
 export class FluxdiagramsProvider implements vscode.TreeDataProvider<FluxdiagramItem> {
     private _onDidChangeTreeData: vscode.EventEmitter<FluxdiagramItem | undefined | null | void> =
         new vscode.EventEmitter<FluxdiagramItem | undefined | null | void>();
@@ -40,32 +40,9 @@ export class FluxdiagramsProvider implements vscode.TreeDataProvider<Fluxdiagram
         return element;
     }
 
-    async getChildren(element?: FluxdiagramItem): Promise<FluxdiagramItem[]> {
-        if (element) {
-            return [];
-        }
-
-        const workspaceFolders = vscode.workspace.workspaceFolders;
-        if (!workspaceFolders) {
-            return [];
-        }
-
-        const fluxdiagramFiles: FluxdiagramItem[] = [];
-
-        for (const folder of workspaceFolders) {
-            const files = await vscode.workspace.findFiles(
-                new vscode.RelativePattern(folder, '**/*.fluxdiagram'),
-                '**/node_modules/**',
-                100
-            );
-
-            for (const file of files) {
-                const label = path.basename(file.fsPath, '.fluxdiagram');
-                fluxdiagramFiles.push(new FluxdiagramItem(label, file));
-            }
-        }
-
-        return fluxdiagramFiles;
+    // Always return empty array to show welcome view with buttons
+    getChildren(_element?: FluxdiagramItem): FluxdiagramItem[] {
+        return [];
     }
 }
 
