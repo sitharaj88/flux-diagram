@@ -6,14 +6,14 @@
 import type { CanvasController } from './CanvasController';
 import type { NodeRenderer } from './NodeRenderer';
 import type { EdgeRenderer } from './EdgeRenderer';
-import type { FlowchartApp } from './FlowchartApp';
+import type { FluxdiagramApp } from './FluxdiagramApp';
 import type { Position } from '../../types';
 
 export class InteractionHandler {
     private canvas: CanvasController;
     private nodeRenderer: NodeRenderer;
     private edgeRenderer: EdgeRenderer;
-    private app: FlowchartApp;
+    private app: FluxdiagramApp;
 
     // Drag state
     private isDragging = false;
@@ -33,7 +33,7 @@ export class InteractionHandler {
         canvas: CanvasController,
         nodeRenderer: NodeRenderer,
         edgeRenderer: EdgeRenderer,
-        app: FlowchartApp
+        app: FluxdiagramApp
     ) {
         this.canvas = canvas;
         this.nodeRenderer = nodeRenderer;

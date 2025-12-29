@@ -1,5 +1,5 @@
 /**
- * Core Type Definitions for Flowchart Builder
+ * Core Type Definitions for Fluxdiagram Builder
  * Defines all fundamental types, interfaces, and value objects
  */
 
@@ -165,7 +165,7 @@ export interface FlowEdge {
 // Graph Types
 // ============================================================================
 
-export interface FlowchartMetadata {
+export interface FluxdiagramMetadata {
     id: UUID;
     name: string;
     description?: string;
@@ -183,16 +183,16 @@ export interface Layer {
     locked: boolean;
 }
 
-export interface FlowchartDocument {
-    metadata: FlowchartMetadata;
+export interface FluxdiagramDocument {
+    metadata: FluxdiagramMetadata;
     nodes: FlowNode[];
     edges: FlowEdge[];
     layers: Layer[];
     viewport: Transform;
-    settings: FlowchartSettings;
+    settings: FluxdiagramSettings;
 }
 
-export interface FlowchartSettings {
+export interface FluxdiagramSettings {
     gridSize: number;
     showGrid: boolean;
     snapToGrid: boolean;

@@ -1,10 +1,18 @@
 {
-  "name": "flowchart-builder",
-  "displayName": "Flowchart Builder",
-  "description": "Enterprise-level flowchart builder with modern UI and support for large diagrams",
+  "name": "flux-diagram",
+  "displayName": "FluxDiagram",
+  "description": "Advanced fluxdiagram builder with modern UI and support for large diagrams",
   "version": "1.0.0",
-  "publisher": "flowchart-builder",
-  "license": "MIT",
+  "publisher": "sitharaj",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sitharaj88/flux-diagram.git"
+  },
+  "bugs": {
+    "url": "https://github.com/sitharaj88/flux-diagram/issues"
+  },
+  "homepage": "https://github.com/sitharaj88/flux-diagram#readme",
+  "license": "Apache-2.0",
   "engines": {
     "vscode": "^1.85.0"
   },
@@ -19,74 +27,74 @@
     "visualization",
     "workflow"
   ],
-  "icon": "media/icon.png",
+  "icon": "media/flux-icon.png",
   "galleryBanner": {
     "color": "#1e1e2e",
     "theme": "dark"
   },
   "activationEvents": [
-    "onCustomEditor:flowchartBuilder.editor",
-    "onView:flowchartBuilder.flowcharts",
-    "onView:flowchartBuilder.templates",
-    "onView:flowchartBuilder.recent"
+    "onCustomEditor:fluxDiagram.editor",
+    "onView:fluxDiagram.fluxdiagrams",
+    "onView:fluxDiagram.templates",
+    "onView:fluxDiagram.recent"
   ],
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
       {
-        "command": "flowchartBuilder.newFlowchart",
-        "title": "New Flowchart",
-        "category": "Flowchart Builder",
+        "command": "fluxDiagram.newFluxdiagram",
+        "title": "New Fluxdiagram",
+        "category": "FluxDiagram",
         "icon": "$(add)"
       },
       {
-        "command": "flowchartBuilder.exportPNG",
+        "command": "fluxDiagram.exportPNG",
         "title": "Export as PNG",
-        "category": "Flowchart Builder",
+        "category": "FluxDiagram",
         "icon": "$(export)"
       },
       {
-        "command": "flowchartBuilder.exportSVG",
+        "command": "fluxDiagram.exportSVG",
         "title": "Export as SVG",
-        "category": "Flowchart Builder"
+        "category": "FluxDiagram"
       },
       {
-        "command": "flowchartBuilder.exportJSON",
+        "command": "fluxDiagram.exportJSON",
         "title": "Export as JSON",
-        "category": "Flowchart Builder"
+        "category": "FluxDiagram"
       },
       {
-        "command": "flowchartBuilder.autoLayout",
+        "command": "fluxDiagram.autoLayout",
         "title": "Auto Layout",
-        "category": "Flowchart Builder",
+        "category": "FluxDiagram",
         "icon": "$(layout)"
       },
       {
-        "command": "flowchartBuilder.zoomIn",
+        "command": "fluxDiagram.zoomIn",
         "title": "Zoom In",
-        "category": "Flowchart Builder",
+        "category": "FluxDiagram",
         "icon": "$(zoom-in)"
       },
       {
-        "command": "flowchartBuilder.zoomOut",
+        "command": "fluxDiagram.zoomOut",
         "title": "Zoom Out",
-        "category": "Flowchart Builder",
+        "category": "FluxDiagram",
         "icon": "$(zoom-out)"
       },
       {
-        "command": "flowchartBuilder.fitToView",
+        "command": "fluxDiagram.fitToView",
         "title": "Fit to View",
-        "category": "Flowchart Builder",
+        "category": "FluxDiagram",
         "icon": "$(screen-full)"
       }
     ],
     "customEditors": [
       {
-        "viewType": "flowchartBuilder.editor",
-        "displayName": "Flowchart Editor",
+        "viewType": "fluxDiagram.editor",
+        "displayName": "Fluxdiagram Editor",
         "selector": [
           {
-            "filenamePattern": "*.flowchart"
+            "filenamePattern": "*.fluxdiagram"
           }
         ],
         "priority": "default"
@@ -95,27 +103,27 @@
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "flowchartBuilder",
-          "title": "Flowchart Builder",
-          "icon": "media/flowchart-icon.svg"
+          "id": "fluxDiagram",
+          "title": "FluxDiagram",
+          "icon": "media/sidebar-icon.svg"
         }
       ]
     },
     "views": {
-      "flowchartBuilder": [
+      "fluxDiagram": [
         {
-          "id": "flowchartBuilder.flowcharts",
-          "name": "Flowcharts",
+          "id": "fluxDiagram.fluxdiagrams",
+          "name": "Fluxdiagrams",
           "icon": "$(symbol-misc)",
-          "contextualTitle": "Flowchart Builder"
+          "contextualTitle": "FluxDiagram"
         },
         {
-          "id": "flowchartBuilder.templates",
+          "id": "fluxDiagram.templates",
           "name": "Templates",
           "icon": "$(file-code)"
         },
         {
-          "id": "flowchartBuilder.recent",
+          "id": "fluxDiagram.recent",
           "name": "Recent",
           "icon": "$(history)"
         }
@@ -123,85 +131,85 @@
     },
     "viewsWelcome": [
       {
-        "view": "flowchartBuilder.flowcharts",
-        "contents": "No flowchart files found in workspace.\n[Create New Flowchart](command:flowchartBuilder.newFlowchart)\n[Open Flowchart](command:workbench.action.files.openFile)"
+        "view": "fluxDiagram.fluxdiagrams",
+        "contents": "No fluxdiagram files found in workspace.\n[Create New Fluxdiagram](command:fluxDiagram.newFluxdiagram)\n[Open Fluxdiagram](command:workbench.action.files.openFile)"
       },
       {
-        "view": "flowchartBuilder.templates",
-        "contents": "Flowchart templates to quickly get started.\n[Process Flow](command:flowchartBuilder.templateProcess)\n[Decision Tree](command:flowchartBuilder.templateDecision)\n[Swimlane](command:flowchartBuilder.templateSwimlane)"
+        "view": "fluxDiagram.templates",
+        "contents": "Fluxdiagram templates to quickly get started.\n[Process Flow](command:fluxDiagram.templateProcess)\n[Decision Tree](command:fluxDiagram.templateDecision)\n[Swimlane](command:fluxDiagram.templateSwimlane)"
       },
       {
-        "view": "flowchartBuilder.recent",
-        "contents": "No recent flowcharts.\nOpen a .flowchart file to see it here."
+        "view": "fluxDiagram.recent",
+        "contents": "No recent fluxdiagrams.\nOpen a .fluxdiagram file to see it here."
       }
     ],
     "menus": {
       "commandPalette": [
         {
-          "command": "flowchartBuilder.newFlowchart",
+          "command": "fluxDiagram.newFluxdiagram",
           "when": "true"
         },
         {
-          "command": "flowchartBuilder.exportPNG",
-          "when": "activeCustomEditorId == flowchartBuilder.editor"
+          "command": "fluxDiagram.exportPNG",
+          "when": "activeCustomEditorId == fluxDiagram.editor"
         },
         {
-          "command": "flowchartBuilder.exportSVG",
-          "when": "activeCustomEditorId == flowchartBuilder.editor"
+          "command": "fluxDiagram.exportSVG",
+          "when": "activeCustomEditorId == fluxDiagram.editor"
         },
         {
-          "command": "flowchartBuilder.autoLayout",
-          "when": "activeCustomEditorId == flowchartBuilder.editor"
+          "command": "fluxDiagram.autoLayout",
+          "when": "activeCustomEditorId == fluxDiagram.editor"
         }
       ],
       "editor/title": [
         {
-          "command": "flowchartBuilder.zoomIn",
-          "when": "activeCustomEditorId == flowchartBuilder.editor",
+          "command": "fluxDiagram.zoomIn",
+          "when": "activeCustomEditorId == fluxDiagram.editor",
           "group": "navigation@1"
         },
         {
-          "command": "flowchartBuilder.zoomOut",
-          "when": "activeCustomEditorId == flowchartBuilder.editor",
+          "command": "fluxDiagram.zoomOut",
+          "when": "activeCustomEditorId == fluxDiagram.editor",
           "group": "navigation@2"
         },
         {
-          "command": "flowchartBuilder.fitToView",
-          "when": "activeCustomEditorId == flowchartBuilder.editor",
+          "command": "fluxDiagram.fitToView",
+          "when": "activeCustomEditorId == fluxDiagram.editor",
           "group": "navigation@3"
         }
       ]
     },
     "keybindings": [
       {
-        "command": "flowchartBuilder.zoomIn",
+        "command": "fluxDiagram.zoomIn",
         "key": "ctrl+=",
         "mac": "cmd+=",
-        "when": "activeCustomEditorId == flowchartBuilder.editor"
+        "when": "activeCustomEditorId == fluxDiagram.editor"
       },
       {
-        "command": "flowchartBuilder.zoomOut",
+        "command": "fluxDiagram.zoomOut",
         "key": "ctrl+-",
         "mac": "cmd+-",
-        "when": "activeCustomEditorId == flowchartBuilder.editor"
+        "when": "activeCustomEditorId == fluxDiagram.editor"
       },
       {
-        "command": "flowchartBuilder.fitToView",
+        "command": "fluxDiagram.fitToView",
         "key": "ctrl+0",
         "mac": "cmd+0",
-        "when": "activeCustomEditorId == flowchartBuilder.editor"
+        "when": "activeCustomEditorId == fluxDiagram.editor"
       },
       {
-        "command": "flowchartBuilder.autoLayout",
+        "command": "fluxDiagram.autoLayout",
         "key": "ctrl+shift+l",
         "mac": "cmd+shift+l",
-        "when": "activeCustomEditorId == flowchartBuilder.editor"
+        "when": "activeCustomEditorId == fluxDiagram.editor"
       }
     ],
     "configuration": {
-      "title": "Flowchart Builder",
+      "title": "FluxDiagram",
       "properties": {
-        "flowchartBuilder.defaultTheme": {
+        "fluxDiagram.defaultTheme": {
           "type": "string",
           "default": "auto",
           "enum": [
@@ -209,31 +217,31 @@
             "light",
             "dark"
           ],
-          "description": "Default theme for the flowchart editor"
+          "description": "Default theme for the fluxdiagram editor"
         },
-        "flowchartBuilder.gridSize": {
+        "fluxDiagram.gridSize": {
           "type": "number",
           "default": 20,
           "minimum": 5,
           "maximum": 100,
           "description": "Grid size for snapping in pixels"
         },
-        "flowchartBuilder.showGrid": {
+        "fluxDiagram.showGrid": {
           "type": "boolean",
           "default": true,
           "description": "Show grid in the canvas"
         },
-        "flowchartBuilder.showMinimap": {
+        "fluxDiagram.showMinimap": {
           "type": "boolean",
           "default": true,
           "description": "Show minimap for navigation"
         },
-        "flowchartBuilder.autoSave": {
+        "fluxDiagram.autoSave": {
           "type": "boolean",
           "default": false,
           "description": "Automatically save changes"
         },
-        "flowchartBuilder.undoHistoryLimit": {
+        "fluxDiagram.undoHistoryLimit": {
           "type": "number",
           "default": 50,
           "minimum": 10,

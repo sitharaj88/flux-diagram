@@ -1,0 +1,12 @@
+.vscode/**
+.git/**
+src/**
+test/**
+.gitignore
+tsconfig.json
+jest.config.js
+esbuild.config.js
+*.py
+node_modules/**
+media/readme-logo.png
+examples/**

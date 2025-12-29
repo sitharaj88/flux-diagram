@@ -1,14 +1,15 @@
 /**
- * Custom Editor Provider for Flowchart files
+ * Custom Editor Provider for Fluxdiagram files
  */
 
 import * as vscode from 'vscode';
 import * as path from 'path';
 
-export class FlowchartEditorProvider implements vscode.CustomTextEditorProvider {
-  public static readonly viewType = 'flowchartBuilder.editor';
+export class FluxdiagramEditorProvider implements vscode.CustomTextEditorProvider {
+  public static readonly viewType = 'fluxDiagram.editor';
 
   private activePanel: vscode.WebviewPanel | undefined;
+  private isSaving = false;
 
   constructor(private readonly context: vscode.ExtensionContext) { }
 
@@ -39,6 +40,7 @@ export class FlowchartEditorProvider implements vscode.CustomTextEditorProvider 
     // Document change subscription
     const changeDocumentSubscription = vscode.workspace.onDidChangeTextDocument((e) => {
       if (e.document.uri.toString() === document.uri.toString()) {
+        if (this.isSaving) { return; }
         this.updateWebview(webviewPanel.webview, document);
       }
     });
@@ -106,8 +108,8 @@ export class FlowchartEditorProvider implements vscode.CustomTextEditorProvider 
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline' https://fonts.googleapis.com; script-src 'nonce-${nonce}'; img-src ${webview.cspSource} data: blob:; font-src ${webview.cspSource} https://fonts.gstatic.com;">
-  <title>Flowchart Builder</title>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline' https://fonts.googleapis.com; script-src 'nonce-${nonce}'; img-src ${webview.cspSource} data: blob:; font-src ${webview.cspSource} https://fonts.gstatic.com; worker-src 'none'; child-src 'none';">
+  <title>Fluxdiagram Builder</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&family=Inter:wght@400;700&family=JetBrains+Mono:wght@400;700&family=Lato:wght@400;700&family=Montserrat:wght@400;700&family=Nunito:wght@400;700&family=Open+Sans:wght@400;700&family=Poppins:wght@400;700&family=Raleway:wght@400;700&family=Roboto:wght@400;700&family=Source+Sans+Pro:wght@400;700&family=Ubuntu:wght@400;700&display=swap" rel="stylesheet">
@@ -119,7 +121,7 @@ export class FlowchartEditorProvider implements vscode.CustomTextEditorProvider 
   <!-- Skip link for accessibility -->
   <a href="#canvas-main" class="skip-link">Skip to canvas</a>
   
-  <div id="app" role="application" aria-label="Flowchart Builder">
+  <div id="app" role="application" aria-label="Fluxdiagram Builder">
     <header class="toolbar" id="toolbar" role="toolbar" aria-label="Main toolbar">
       <div class="toolbar-section toolbar-left">
         <button class="toolbar-btn" id="btn-undo" title="Undo (Ctrl+Z)" aria-label="Undo" disabled>
@@ -155,7 +157,7 @@ export class FlowchartEditorProvider implements vscode.CustomTextEditorProvider 
         </div>
       </div>
       <div class="toolbar-section toolbar-right">
-        <button class="toolbar-btn primary" id="btn-export" title="Export" aria-label="Export flowchart">
+        <button class="toolbar-btn primary" id="btn-export" title="Export" aria-label="Export fluxdiagram">
           <span class="icon" aria-hidden="true">↓</span>
           <span class="label">Export</span>
         </button>
@@ -166,7 +168,7 @@ export class FlowchartEditorProvider implements vscode.CustomTextEditorProvider 
       <!-- Main Sidebar Menu -->
       <nav class="sidebar-menu" id="sidebar-menu" role="navigation" aria-label="Main menu">
         <div class="menu-section">
-          <button class="menu-item" id="menu-new" title="New Flowchart" aria-label="New flowchart">
+          <button class="menu-item" id="menu-new" title="New Fluxdiagram" aria-label="New fluxdiagram">
             <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
               <polyline points="14 2 14 8 20 8"/>
@@ -280,7 +282,7 @@ export class FlowchartEditorProvider implements vscode.CustomTextEditorProvider 
         <div class="palette-items" id="palette-items">
           <div class="palette-category" data-category="flowchart">
             <div class="category-header">
-              <span>Flowchart</span>
+              <span>Fluxdiagram</span>
             </div>
             <div class="category-items">
               <div class="palette-item" data-type="rectangle" draggable="true">
@@ -491,10 +493,10 @@ export class FlowchartEditorProvider implements vscode.CustomTextEditorProvider 
         payload: data,
       });
     } catch (error) {
-      console.error('Failed to parse flowchart document:', error);
+      console.error('Failed to parse fluxdiagram document:', error);
       void webview.postMessage({
         type: 'error',
-        payload: { message: 'Failed to parse flowchart document' },
+        payload: { message: 'Failed to parse fluxdiagram document' },
       });
     }
   }
@@ -512,14 +514,19 @@ export class FlowchartEditorProvider implements vscode.CustomTextEditorProvider 
           new vscode.Range(0, 0, document.lineCount, 0),
           content
         );
-        await vscode.workspace.applyEdit(edit);
+        this.isSaving = true;
+        try {
+          await vscode.workspace.applyEdit(edit);
+        } finally {
+          this.isSaving = false;
+        }
         break;
       }
 
       case 'command': {
         const payload = message.payload as { command: string };
-        if (payload.command === 'newFlowchart') {
-          void vscode.commands.executeCommand('flowchartBuilder.newFlowchart');
+        if (payload.command === 'newFluxdiagram') {
+          void vscode.commands.executeCommand('fluxDiagram.newFluxdiagram');
         }
         break;
       }
@@ -556,7 +563,7 @@ export class FlowchartEditorProvider implements vscode.CustomTextEditorProvider 
     data: string,
     document: vscode.TextDocument
   ): Promise<void> {
-    const defaultName = path.basename(document.uri.fsPath, '.flowchart');
+    const defaultName = path.basename(document.uri.fsPath, '.fluxdiagram');
     const extension = format === 'json' ? 'json' : format;
 
     const uri = await vscode.window.showSaveDialog({

@@ -1,90 +1,98 @@
-# Flowchart Builder
+<div align="center">
+  <img src="media/flux-icon.png" alt="FluxDiagram Logo" width="128" />
+  <h1>FluxDiagram</h1>
+  <p><strong>The Professional Flowchart & Diagram Builder for VS Code</strong></p>
+  
+  [![VS Code](https://img.shields.io/badge/VS%20Code-1.85%2B-007ACC.svg?style=flat&logo=visual-studio-code&logoColor=white)](https://marketplace.visualstudio.com/vscode)
+  [![License](https://img.shields.io/badge/License-Apache_2.0-green.svg?style=flat)](LICENSE)
+  [![TypeScript](https://img.shields.io/badge/TypeScript-5.3-3178C6.svg?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+  [![Version](https://img.shields.io/badge/version-1.0.0-blue.svg?style=flat)](package.json)
 
-Enterprise-level VS Code extension for creating and managing flowcharts with modern UI.
+  <p>
+    Design beautiful, complex flowcharts and diagrams directly within VS Code. <br>
+    Built with modern web technologies, Glassmorphism UI, and high-performance rendering.
+  </p>
+</div>
 
-![VS Code](https://img.shields.io/badge/VS%20Code-1.85+-blue)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue)
-![License](https://img.shields.io/badge/License-MIT-green)
+---
 
-## Features
+## ✨ Features
 
-- 🎨 **Modern UI** with glassmorphism design
-- 🌓 **Dark/Light themes** that follow VS Code
-- 📐 **7+ Node shapes** (rectangle, diamond, oval, parallelogram, etc.)
-- 🔗 **Smart connections** with bezier, orthogonal, and straight edges
-- ↩️ **Undo/Redo** with 50+ operation history
-- 🔍 **Zoom & Pan** with mouse wheel and keyboard
-- 🗺️ **Minimap** for navigation
-- 📦 **Export** to JSON, SVG
-- ⌨️ **Keyboard shortcuts** for power users
+### 🎨 Modern & Beautiful UI
+- **Premium Glassmorphism Design**: A sleek, modern interface that fits right into 2024.
+- **Adaptive Theming**: Seamlessly switches between Dark and Light modes based on your VS Code theme.
+- **Retina Ready**: Crisp SVG-based rendering for all shapes and connections.
 
-## Installation
+### 🛠️ Powerful Editing Tools
+- **Rich Node Library**: Over 15+ standard shapes including flowcharts, decision trees, and process symbols.
+- **Smart Connections**:
+  - **Bezier Curves**: Smooth, elegant lines for organic flows.
+  - **Orthogonal**: Structured, right-angle lines for technical diagrams.
+  - **Straight**: Direct connections for simple graphs.
+- **Snap-to-Grid**: Precision alignment with customizable grid snapping (Toggleable).
+- **Minimap**: Navigate large diagrams with ease using the interactive minimap.
 
-```bash
-# Clone the repository
-cd flowchart-builder
+### ⚡ Advanced Productivity
+- **Auto-Layout**: Instantly organize messy diagrams with hierarchical or force-directed layouts.
+- **Export Options**: Export your work to high-quality **PNG** or **SVG** for reports and presentations.
+- **History Management**: Robust Undo/Redo system capturing every movement and edit.
+- **Keyboard Shortcuts**: Designed for power users to speed up workflows.
 
-# Install dependencies
-npm install
+---
 
-# Build
-npm run build
-```
+## 🚀 Getting Started
 
-## Development
+### Installation
+1. Search for **FluxDiagram** in the VS Code Marketplace.
+2. Click **Install**.
 
-```bash
-# Watch mode with hot reload
-npm run dev
+### Usage
+1. Open the **Command Palette** (`Ctrl+Shift+P` / `Cmd+Shift+P`).
+2. Type **"New Fluxdiagram"** and verify the file extension is `.fluxdiagram`.
+3. The editor will open automatically.
 
-# Run tests
-npm test
+### Creating Your First Diagram
+1. **Drag & Drop** shapes from the left sidebar onto the infinite canvas.
+2. **Connect** nodes by dragging from one port (dot) to another.
+3. **Edit Text** by double-clicking on any node.
+4. **Style** your diagram using the properties panel (coming soon) or auto-layout features.
 
-# Lint code
-npm run lint
-```
+---
 
-Press **F5** in VS Code to launch the Extension Development Host.
+## ⌨️ Keyboard Shortcuts
 
-## Usage
+| Shortcut | Action | Description |
+|----------|--------|-------------|
+| `Ctrl` + `S` | **Save** | Save the diagram to disk |
+| `Ctrl` + `Z` | **Undo** | Revert last action |
+| `Ctrl` + `Y` | **Redo** | Re-apply last undone action |
+| `Delete` | **Delete** | Remove selected nodes/edges |
+| `Ctrl` + `A` | **Select All** | Select all elements on canvas |
+| `Ctrl` + `+` | **Zoom In** | Increase canvas zoom level |
+| `Ctrl` + `-` | **Zoom Out** | Decrease canvas zoom level |
+| `Ctrl` + `0` | **Fit to View** | Reset zoom to fit all content |
+| `Space` + `Drag` | **Pan** | Pan around the canvas |
 
-1. Create a new flowchart: `Ctrl+Shift+P` → "Flowchart: New"
-2. Drag shapes from the left palette onto the canvas
-3. Click on ports to create connections
-4. Double-click nodes to edit labels
-5. Use `Ctrl+S` to save
+---
 
-## Keyboard Shortcuts
+## 🏗️ Architecture
 
-| Shortcut | Action |
-|----------|--------|
-| `Ctrl+Z` | Undo |
-| `Ctrl+Y` | Redo |
-| `Ctrl+C` | Copy |
-| `Ctrl+V` | Paste |
-| `Ctrl+D` | Duplicate |
-| `Ctrl+A` | Select All |
-| `Delete` | Delete selected |
-| `Ctrl+=` | Zoom in |
-| `Ctrl+-` | Zoom out |
-| `Ctrl+0` | Fit to view |
-| `Alt+Drag` | Pan canvas |
+FluxDiagram is built with a modern stack ensuring performance and maintainability:
 
-## Architecture
+- **Core**: VS Code Webview API & Custom Editor API
+- **Language**: TypeScript (Strict Mode)
+- **Rendering**: SVG-based custom rendering engine (No heavy third-party canvas libs)
+- **Bundling**: esbuild for lightning-fast builds
+- **State**: Centralized state management with command pattern for history
 
-```
-src/
-├── core/           # Domain logic
-│   ├── models/     # Node, Edge, Graph
-│   ├── state/      # State management
-│   └── events/     # Event bus
-├── webview/        # UI
-│   ├── app/        # Components
-│   └── styles/     # CSS
-├── extension.ts    # Entry point
-└── FlowchartEditorProvider.ts
-```
+---
 
-## License
+## 📄 License
 
-MIT
+This project is licensed under the **Apache 2.0 License** - see the [LICENSE](LICENSE) file for details.
+
+---
+
+<div align="center">
+  <sub>Built with ❤️ by sitharaj</sub>
+</div>

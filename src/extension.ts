@@ -1,18 +1,18 @@
 /**
- * Flowchart Builder Extension Entry Point
+ * Fluxdiagram Builder Extension Entry Point
  */
 
 import * as vscode from 'vscode';
-import { FlowchartEditorProvider } from './FlowchartEditorProvider';
+import { FluxdiagramEditorProvider } from './FluxdiagramEditorProvider';
 import { registerSidebarProviders } from './sidebar';
 
 export function activate(context: vscode.ExtensionContext): void {
     // Register the custom editor provider
-    const provider = new FlowchartEditorProvider(context);
+    const provider = new FluxdiagramEditorProvider(context);
 
     context.subscriptions.push(
         vscode.window.registerCustomEditorProvider(
-            FlowchartEditorProvider.viewType,
+            FluxdiagramEditorProvider.viewType,
             provider,
             {
                 webviewOptions: {
@@ -26,10 +26,10 @@ export function activate(context: vscode.ExtensionContext): void {
     // Register sidebar tree views
     const sidebarProviders = registerSidebarProviders(context);
 
-    // Track opened flowchart files for Recent panel
+    // Track opened fluxdiagram files for Recent panel
     context.subscriptions.push(
         vscode.window.onDidChangeActiveTextEditor((editor) => {
-            if (editor?.document.fileName.endsWith('.flowchart')) {
+            if (editor?.document.fileName.endsWith('.fluxdiagram')) {
                 sidebarProviders.recent.addRecent(editor.document.uri);
             }
         })
@@ -37,24 +37,24 @@ export function activate(context: vscode.ExtensionContext): void {
 
     // Register commands
     context.subscriptions.push(
-        vscode.commands.registerCommand('flowchartBuilder.newFlowchart', async () => {
+        vscode.commands.registerCommand('fluxDiagram.newFluxdiagram', async () => {
             const workspaceFolders = vscode.workspace.workspaceFolders;
             const defaultUri = workspaceFolders?.[0]?.uri ?? vscode.Uri.file(process.cwd());
 
             const uri = await vscode.window.showSaveDialog({
-                defaultUri: vscode.Uri.joinPath(defaultUri, 'untitled.flowchart'),
+                defaultUri: vscode.Uri.joinPath(defaultUri, 'untitled.fluxdiagram'),
                 filters: {
-                    'Flowchart': ['flowchart'],
+                    'Fluxdiagram': ['fluxdiagram'],
                 },
-                title: 'Create New Flowchart',
+                title: 'Create New Fluxdiagram',
             });
 
             if (uri) {
-                // Create empty flowchart file
+                // Create empty fluxdiagram file
                 const emptyDocument = {
                     metadata: {
                         id: generateId(),
-                        name: uri.path.split('/').pop()?.replace('.flowchart', '') ?? 'Untitled',
+                        name: uri.path.split('/').pop()?.replace('.fluxdiagram', '') ?? 'Untitled',
                         description: '',
                         version: '1.0.0',
                         createdAt: Date.now(),
@@ -76,13 +76,13 @@ export function activate(context: vscode.ExtensionContext): void {
                     uri,
                     Buffer.from(JSON.stringify(emptyDocument, null, 2))
                 );
-                await vscode.commands.executeCommand('vscode.openWith', uri, FlowchartEditorProvider.viewType);
+                await vscode.commands.executeCommand('vscode.openWith', uri, FluxdiagramEditorProvider.viewType);
             }
         })
     );
 
     context.subscriptions.push(
-        vscode.commands.registerCommand('flowchartBuilder.exportPNG', () => {
+        vscode.commands.registerCommand('fluxDiagram.exportPNG', () => {
             const panel = provider.getActivePanel();
             if (panel) {
                 void panel.webview.postMessage({ type: 'export', payload: { format: 'png' } });
@@ -91,7 +91,7 @@ export function activate(context: vscode.ExtensionContext): void {
     );
 
     context.subscriptions.push(
-        vscode.commands.registerCommand('flowchartBuilder.exportSVG', () => {
+        vscode.commands.registerCommand('fluxDiagram.exportSVG', () => {
             const panel = provider.getActivePanel();
             if (panel) {
                 void panel.webview.postMessage({ type: 'export', payload: { format: 'svg' } });
@@ -100,7 +100,7 @@ export function activate(context: vscode.ExtensionContext): void {
     );
 
     context.subscriptions.push(
-        vscode.commands.registerCommand('flowchartBuilder.exportJSON', () => {
+        vscode.commands.registerCommand('fluxDiagram.exportJSON', () => {
             const panel = provider.getActivePanel();
             if (panel) {
                 void panel.webview.postMessage({ type: 'export', payload: { format: 'json' } });
@@ -109,7 +109,7 @@ export function activate(context: vscode.ExtensionContext): void {
     );
 
     context.subscriptions.push(
-        vscode.commands.registerCommand('flowchartBuilder.autoLayout', () => {
+        vscode.commands.registerCommand('fluxDiagram.autoLayout', () => {
             const panel = provider.getActivePanel();
             if (panel) {
                 void panel.webview.postMessage({ type: 'layout', payload: { type: 'hierarchical' } });
@@ -118,7 +118,7 @@ export function activate(context: vscode.ExtensionContext): void {
     );
 
     context.subscriptions.push(
-        vscode.commands.registerCommand('flowchartBuilder.zoomIn', () => {
+        vscode.commands.registerCommand('fluxDiagram.zoomIn', () => {
             const panel = provider.getActivePanel();
             if (panel) {
                 void panel.webview.postMessage({ type: 'zoom', payload: { direction: 'in' } });
@@ -127,7 +127,7 @@ export function activate(context: vscode.ExtensionContext): void {
     );
 
     context.subscriptions.push(
-        vscode.commands.registerCommand('flowchartBuilder.zoomOut', () => {
+        vscode.commands.registerCommand('fluxDiagram.zoomOut', () => {
             const panel = provider.getActivePanel();
             if (panel) {
                 void panel.webview.postMessage({ type: 'zoom', payload: { direction: 'out' } });
@@ -136,7 +136,7 @@ export function activate(context: vscode.ExtensionContext): void {
     );
 
     context.subscriptions.push(
-        vscode.commands.registerCommand('flowchartBuilder.fitToView', () => {
+        vscode.commands.registerCommand('fluxDiagram.fitToView', () => {
             const panel = provider.getActivePanel();
             if (panel) {
                 void panel.webview.postMessage({ type: 'zoom', payload: { direction: 'fit' } });
@@ -146,7 +146,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
     // Register template commands
     context.subscriptions.push(
-        vscode.commands.registerCommand('flowchartBuilder.createFromTemplate', async (templateId: string) => {
+        vscode.commands.registerCommand('fluxDiagram.createFromTemplate', async (templateId: string) => {
             const template = getTemplate(templateId);
             if (!template) {
                 void vscode.window.showErrorMessage(`Template "${templateId}" not found`);
@@ -157,28 +157,28 @@ export function activate(context: vscode.ExtensionContext): void {
             const defaultUri = workspaceFolders?.[0]?.uri ?? vscode.Uri.file(process.cwd());
 
             const uri = await vscode.window.showSaveDialog({
-                defaultUri: vscode.Uri.joinPath(defaultUri, `${templateId}.flowchart`),
-                filters: { 'Flowchart': ['flowchart'] },
+                defaultUri: vscode.Uri.joinPath(defaultUri, `${templateId}.fluxdiagram`),
+                filters: { 'Fluxdiagram': ['fluxdiagram'] },
                 title: `Create ${template.name}`,
             });
 
             if (uri) {
                 await vscode.workspace.fs.writeFile(uri, Buffer.from(JSON.stringify(template.document, null, 2)));
-                await vscode.commands.executeCommand('vscode.openWith', uri, FlowchartEditorProvider.viewType);
+                await vscode.commands.executeCommand('vscode.openWith', uri, FluxdiagramEditorProvider.viewType);
             }
         })
     );
 
     // Template shortcut commands
     context.subscriptions.push(
-        vscode.commands.registerCommand('flowchartBuilder.templateProcess', () => {
-            void vscode.commands.executeCommand('flowchartBuilder.createFromTemplate', 'process');
+        vscode.commands.registerCommand('fluxDiagram.templateProcess', () => {
+            void vscode.commands.executeCommand('fluxDiagram.createFromTemplate', 'process');
         }),
-        vscode.commands.registerCommand('flowchartBuilder.templateDecision', () => {
-            void vscode.commands.executeCommand('flowchartBuilder.createFromTemplate', 'decision');
+        vscode.commands.registerCommand('fluxDiagram.templateDecision', () => {
+            void vscode.commands.executeCommand('fluxDiagram.createFromTemplate', 'decision');
         }),
-        vscode.commands.registerCommand('flowchartBuilder.templateSwimlane', () => {
-            void vscode.commands.executeCommand('flowchartBuilder.createFromTemplate', 'swimlane');
+        vscode.commands.registerCommand('fluxDiagram.templateSwimlane', () => {
+            void vscode.commands.executeCommand('fluxDiagram.createFromTemplate', 'swimlane');
         })
     );
 }

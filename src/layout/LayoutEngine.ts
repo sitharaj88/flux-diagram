@@ -1,5 +1,5 @@
 /**
- * Layout Engine - Auto-layout algorithms for flowchart nodes
+ * Layout Engine - Auto-layout algorithms for fluxdiagram nodes
  */
 
 import type { FlowNode, FlowEdge, Position, LayoutDirection } from '../types';
@@ -14,7 +14,7 @@ export interface LayoutOptions {
 export class LayoutEngine {
     /**
      * Hierarchical layout (Sugiyama-style)
-     * Best for flowcharts with clear direction
+     * Best for fluxdiagrams with clear direction
      */
     static hierarchical(
         nodes: FlowNode[],
@@ -27,7 +27,7 @@ export class LayoutEngine {
 
         const positions = new Map<string, Position>();
 
-        if (nodes.length === 0) {return positions;}
+        if (nodes.length === 0) { return positions; }
 
         // Build adjacency for outgoing edges
         const outgoing = new Map<string, string[]>();
@@ -48,7 +48,7 @@ export class LayoutEngine {
         if (roots.length === 0) {
             // Fallback: use first node as root
             const firstNode = nodes[0];
-            if (firstNode) {roots.push(firstNode);}
+            if (firstNode) { roots.push(firstNode); }
         }
 
         // Assign levels via BFS
@@ -146,7 +146,7 @@ export class LayoutEngine {
 
         const positions = new Map<string, Position>();
 
-        if (nodes.length === 0) {return positions;}
+        if (nodes.length === 0) { return positions; }
 
         // Initialize random positions
         nodes.forEach((n, i) => {
@@ -200,7 +200,7 @@ export class LayoutEngine {
             edges.forEach((e) => {
                 const p1 = positions.get(e.source.nodeId);
                 const p2 = positions.get(e.target.nodeId);
-                if (!p1 || !p2) {return;}
+                if (!p1 || !p2) { return; }
 
                 const dx = p2.x - p1.x;
                 const dy = p2.y - p1.y;
@@ -245,7 +245,7 @@ export class LayoutEngine {
         const nodeSpacing = options.nodeSpacing ?? 200;
         const positions = new Map<string, Position>();
 
-        if (nodes.length === 0) {return positions;}
+        if (nodes.length === 0) { return positions; }
 
         const cols = Math.ceil(Math.sqrt(nodes.length));
 
@@ -273,7 +273,7 @@ export class LayoutEngine {
         const levelSpacing = options.levelSpacing ?? 150;
         const positions = new Map<string, Position>();
 
-        if (nodes.length === 0) {return positions;}
+        if (nodes.length === 0) { return positions; }
 
         // Find root (node with most outgoing edges or first node)
         const outDegree = new Map<string, number>();
@@ -299,7 +299,7 @@ export class LayoutEngine {
 
         while (queue.length > 0) {
             const { id, level } = queue.shift()!;
-            if (visited.has(id)) {continue;}
+            if (visited.has(id)) { continue; }
             visited.add(id);
             levels.set(id, level);
 
@@ -315,13 +315,13 @@ export class LayoutEngine {
 
         // Handle disconnected
         nodes.forEach((n) => {
-            if (!levels.has(n.id)) {levels.set(n.id, 0);}
+            if (!levels.has(n.id)) { levels.set(n.id, 0); }
         });
 
         // Group by level
         const levelGroups = new Map<number, string[]>();
         levels.forEach((level, id) => {
-            if (!levelGroups.has(level)) {levelGroups.set(level, []);}
+            if (!levelGroups.has(level)) { levelGroups.set(level, []); }
             levelGroups.get(level)!.push(id);
         });
 

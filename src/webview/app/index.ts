@@ -1,4 +1,4 @@
-export { FlowchartApp } from './FlowchartApp';
+export { FluxdiagramApp } from './FluxdiagramApp';
 export { CanvasController } from './CanvasController';
 export { NodeRenderer } from './NodeRenderer';
 export { EdgeRenderer } from './EdgeRenderer';

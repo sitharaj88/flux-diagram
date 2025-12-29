@@ -1,8 +1,8 @@
 /**
- * Export Service - Handles exporting flowcharts to various formats
+ * Export Service - Handles exporting fluxdiagrams to various formats
  */
 
-import type { FlowchartDocument, FlowNode, ExportFormat } from '../types';
+import type { FluxdiagramDocument, FlowNode, ExportFormat } from '../types';
 
 export interface ExportResult {
     format: ExportFormat;
@@ -15,7 +15,7 @@ export class ExportService {
     /**
      * Export to JSON format
      */
-    static toJSON(document: FlowchartDocument): ExportResult {
+    static toJSON(document: FluxdiagramDocument): ExportResult {
         const data = JSON.stringify(document, null, 2);
         return {
             format: 'json',
@@ -29,7 +29,7 @@ export class ExportService {
      * Export to SVG format
      */
     static toSVG(
-        document: FlowchartDocument,
+        document: FluxdiagramDocument,
         options: { padding?: number; backgroundColor?: string } = {}
     ): ExportResult {
         const padding = options.padding ?? 50;
@@ -176,14 +176,14 @@ export class ExportService {
      * Note: This requires browser canvas support
      */
     static async toPNG(
-        flowchartDoc: FlowchartDocument,
+        fluxdiagramDoc: FluxdiagramDocument,
         options: { scale?: number; backgroundColor?: string } = {}
     ): Promise<ExportResult> {
         const scale = options.scale ?? 2;
         const backgroundColor = options.backgroundColor ?? '#ffffff';
 
         // First generate SVG
-        const svgResult = this.toSVG(flowchartDoc, { backgroundColor });
+        const svgResult = this.toSVG(fluxdiagramDoc, { backgroundColor });
 
         // Convert SVG to PNG using canvas (browser only)
         const canvas = document.createElement('canvas') as unknown as HTMLCanvasElement;
@@ -218,7 +218,7 @@ export class ExportService {
                     format: 'png',
                     data: dataUrl,
                     mimeType: 'image/png',
-                    filename: `${flowchartDoc.metadata.name}.png`,
+                    filename: `${fluxdiagramDoc.metadata.name}.png`,
                 });
             };
             img.onerror = reject;

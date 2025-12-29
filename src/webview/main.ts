@@ -1,9 +1,9 @@
 /**
- * Main Webview Application for Flowchart Builder
+ * Main Webview Application for Fluxdiagram Builder
  * Handles canvas rendering, interactions, and state synchronization
  */
 
-import { FlowchartApp } from './app/FlowchartApp';
+import { FluxdiagramApp } from './app/FluxdiagramApp';
 
 // VS Code API interface
 interface VSCodeAPI {
@@ -17,10 +17,10 @@ declare function acquireVsCodeApi(): VSCodeAPI;
 // Initialize the application when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
     const vscode = acquireVsCodeApi();
-    const app = new FlowchartApp(vscode);
+    const app = new FluxdiagramApp(vscode);
 
     // Make app available globally for debugging
-    (window as unknown as { flowchartApp: FlowchartApp }).flowchartApp = app;
+    (window as unknown as { fluxdiagramApp: FluxdiagramApp }).fluxdiagramApp = app;
 
     // Handle messages from extension
     window.addEventListener('message', (event) => {

@@ -1,5 +1,5 @@
 /**
- * Main Flowchart Application Class
+ * Main Fluxdiagram Application Class
  * Orchestrates all components and handles state management
  */
 
@@ -8,7 +8,8 @@ import { NodeRenderer } from './NodeRenderer';
 import { EdgeRenderer } from './EdgeRenderer';
 import { InteractionHandler } from './InteractionHandler';
 import { Minimap } from './Minimap';
-import type { FlowchartDocument, FlowNode, FlowEdge, NodeType, NodeStyle, Port, EdgeStyle, EdgeType, Position } from '../../types';
+import { ExportService } from '../../export/ExportService';
+import type { FluxdiagramDocument, FlowNode, FlowEdge, NodeType, NodeStyle, Port, EdgeStyle, EdgeType, Position } from '../../types';
 
 interface VSCodeAPI {
     postMessage(message: unknown): void;
@@ -16,9 +17,9 @@ interface VSCodeAPI {
     setState(state: unknown): void;
 }
 
-export class FlowchartApp {
+export class FluxdiagramApp {
     private vscode: VSCodeAPI;
-    private document: FlowchartDocument | null = null;
+    private document: FluxdiagramDocument | null = null;
 
     private canvas: CanvasController;
     private nodeRenderer: NodeRenderer;
@@ -30,13 +31,17 @@ export class FlowchartApp {
     private selectedEdgeIds: Set<string> = new Set();
     private clipboard: { nodes: FlowNode[]; edges: FlowEdge[] } | null = null;
 
-    private undoStack: FlowchartDocument[] = [];
-    private redoStack: FlowchartDocument[] = [];
+    private undoStack: FluxdiagramDocument[] = [];
+    private redoStack: FluxdiagramDocument[] = [];
     private isDirty = false;
     private activeLayerId: string = 'default';
 
-    public getSettings(): FlowchartDocument['settings'] | undefined {
+    public getSettings(): FluxdiagramDocument['settings'] | undefined {
         return this.document?.settings;
+    }
+
+    public getDocument(): FluxdiagramDocument | null {
+        return this.document;
     }
 
     constructor(vscode: VSCodeAPI) {
@@ -85,13 +90,13 @@ export class FlowchartApp {
     handleMessage(message: { type: string; payload: unknown }): void {
         switch (message.type) {
             case 'load':
-                this.loadDocument(message.payload as FlowchartDocument | null);
+                this.loadDocument(message.payload as FluxdiagramDocument | null);
                 break;
             case 'theme':
                 this.updateTheme(message.payload as { kind: number });
                 break;
             case 'export':
-                this.handleExport(message.payload as { format: string });
+                void this.handleExport(message.payload as { format: string });
                 break;
             case 'layout':
                 this.handleAutoLayout(message.payload as { type: string });
@@ -109,7 +114,7 @@ export class FlowchartApp {
     // Document Management
     // ==========================================================================
 
-    private loadDocument(doc: FlowchartDocument | null): void {
+    private loadDocument(doc: FluxdiagramDocument | null): void {
         if (!doc) {
             // Create empty document
             this.document = {
@@ -215,7 +220,7 @@ export class FlowchartApp {
         if (!this.document) { return; }
 
         // Deep clone current state
-        const snapshot = JSON.parse(JSON.stringify(this.document)) as FlowchartDocument;
+        const snapshot = JSON.parse(JSON.stringify(this.document)) as FluxdiagramDocument;
         this.undoStack.push(snapshot);
 
         // Limit history
@@ -234,7 +239,7 @@ export class FlowchartApp {
         if (this.undoStack.length === 0 || !this.document) { return; }
 
         // Save current state to redo
-        const current = JSON.parse(JSON.stringify(this.document)) as FlowchartDocument;
+        const current = JSON.parse(JSON.stringify(this.document)) as FluxdiagramDocument;
         this.redoStack.push(current);
 
         // Restore previous state
@@ -252,7 +257,7 @@ export class FlowchartApp {
         if (this.redoStack.length === 0 || !this.document) { return; }
 
         // Save current state to undo
-        const current = JSON.parse(JSON.stringify(this.document)) as FlowchartDocument;
+        const current = JSON.parse(JSON.stringify(this.document)) as FluxdiagramDocument;
         this.undoStack.push(current);
 
         // Restore next state
@@ -705,7 +710,7 @@ export class FlowchartApp {
     private setupSidebar(): void {
         // Menu Actions
         document.getElementById('menu-new')?.addEventListener('click', () => {
-            this.vscode.postMessage({ type: 'command', payload: { command: 'newFlowchart' } });
+            this.vscode.postMessage({ type: 'command', payload: { command: 'newFluxdiagram' } });
         });
 
         document.getElementById('menu-save')?.addEventListener('click', () => {
@@ -1667,31 +1672,36 @@ export class FlowchartApp {
         }
     }
 
-    private handleExport(payload: { format: string }): void {
+    async handleExport(payload: { format: string }): Promise<void> {
+        if (!this.document) { return; }
         const format = payload.format;
 
-        if (format === 'json') {
-            const data = JSON.stringify(this.document, null, 2);
-            this.vscode.postMessage({
-                type: 'export',
-                payload: { format: 'json', data },
-            });
-        } else {
-            // For image exports, we'd need to render to canvas/SVG
-            // This is a simplified version
-            const svgElement = document.getElementById('canvas-main') as SVGSVGElement;
-            const serializer = new XMLSerializer();
-            const svgString = serializer.serializeToString(svgElement);
+        try {
+            let result: { format: string; data: string; mimeType: string };
 
-            if (format === 'svg') {
-                this.vscode.postMessage({
-                    type: 'export',
-                    payload: { format: 'svg', data: svgString },
+            if (format === 'json') {
+                result = ExportService.toJSON(this.document);
+            } else if (format === 'svg') {
+                result = ExportService.toSVG(this.document, {
+                    backgroundColor: this.document.settings.theme === 'dark' ? '#1e1e2e' : '#ffffff'
+                });
+            } else if (format === 'png') {
+                this.showToast('Generating PNG...', 'info');
+                result = await ExportService.toPNG(this.document, {
+                    scale: 2,
+                    backgroundColor: this.document.settings.theme === 'dark' ? '#1e1e2e' : '#ffffff'
                 });
             } else {
-                // PNG export would require canvas rendering
-                this.showToast('PNG export coming soon', 'info');
+                throw new Error(`Unsupported format: ${format}`);
             }
+
+            this.vscode.postMessage({
+                type: 'export',
+                payload: { format: result.format, data: result.data },
+            });
+        } catch (error) {
+            console.error('Export failed:', error);
+            this.showToast('Export failed: ' + (error as Error).message, 'error');
         }
     }
 
@@ -2243,15 +2253,4 @@ export class FlowchartApp {
         this.render();
     }
 
-    // ==========================================================================
-    // Public Accessors for InteractionHandler
-    // ==========================================================================
-
-    getDocument(): FlowchartDocument | null {
-        return this.document;
-    }
-
-    getCanvas(): CanvasController {
-        return this.canvas;
-    }
 }

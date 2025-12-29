@@ -5,8 +5,8 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 
-// Tree item for flowchart files
-class FlowchartItem extends vscode.TreeItem {
+// Tree item for fluxdiagram files
+class FluxdiagramItem extends vscode.TreeItem {
     constructor(
         public readonly label: string,
         public readonly uri: vscode.Uri,
@@ -18,29 +18,29 @@ class FlowchartItem extends vscode.TreeItem {
         this.iconPath = new vscode.ThemeIcon('graph');
         this.command = {
             command: 'vscode.open',
-            title: 'Open Flowchart',
+            title: 'Open Fluxdiagram',
             arguments: [uri],
         };
-        this.contextValue = 'flowchartFile';
+        this.contextValue = 'fluxdiagramFile';
     }
 }
 
-// Flowcharts Tree Data Provider
-export class FlowchartsProvider implements vscode.TreeDataProvider<FlowchartItem> {
-    private _onDidChangeTreeData: vscode.EventEmitter<FlowchartItem | undefined | null | void> =
-        new vscode.EventEmitter<FlowchartItem | undefined | null | void>();
-    readonly onDidChangeTreeData: vscode.Event<FlowchartItem | undefined | null | void> =
+// Fluxdiagrams Tree Data Provider
+export class FluxdiagramsProvider implements vscode.TreeDataProvider<FluxdiagramItem> {
+    private _onDidChangeTreeData: vscode.EventEmitter<FluxdiagramItem | undefined | null | void> =
+        new vscode.EventEmitter<FluxdiagramItem | undefined | null | void>();
+    readonly onDidChangeTreeData: vscode.Event<FluxdiagramItem | undefined | null | void> =
         this._onDidChangeTreeData.event;
 
     refresh(): void {
         this._onDidChangeTreeData.fire();
     }
 
-    getTreeItem(element: FlowchartItem): vscode.TreeItem {
+    getTreeItem(element: FluxdiagramItem): vscode.TreeItem {
         return element;
     }
 
-    async getChildren(element?: FlowchartItem): Promise<FlowchartItem[]> {
+    async getChildren(element?: FluxdiagramItem): Promise<FluxdiagramItem[]> {
         if (element) {
             return [];
         }
@@ -50,22 +50,22 @@ export class FlowchartsProvider implements vscode.TreeDataProvider<FlowchartItem
             return [];
         }
 
-        const flowchartFiles: FlowchartItem[] = [];
+        const fluxdiagramFiles: FluxdiagramItem[] = [];
 
         for (const folder of workspaceFolders) {
             const files = await vscode.workspace.findFiles(
-                new vscode.RelativePattern(folder, '**/*.flowchart'),
+                new vscode.RelativePattern(folder, '**/*.fluxdiagram'),
                 '**/node_modules/**',
                 100
             );
 
             for (const file of files) {
-                const label = path.basename(file.fsPath, '.flowchart');
-                flowchartFiles.push(new FlowchartItem(label, file));
+                const label = path.basename(file.fsPath, '.fluxdiagram');
+                fluxdiagramFiles.push(new FluxdiagramItem(label, file));
             }
         }
 
-        return flowchartFiles;
+        return fluxdiagramFiles;
     }
 }
 
@@ -80,7 +80,7 @@ class TemplateItem extends vscode.TreeItem {
         this.tooltip = description;
         this.iconPath = new vscode.ThemeIcon('file-code');
         this.command = {
-            command: 'flowchartBuilder.createFromTemplate',
+            command: 'fluxDiagram.createFromTemplate',
             title: 'Create from Template',
             arguments: [templateId],
         };
@@ -127,7 +127,7 @@ class RecentItem extends vscode.TreeItem {
         this.iconPath = new vscode.ThemeIcon('history');
         this.command = {
             command: 'vscode.open',
-            title: 'Open Flowchart',
+            title: 'Open Fluxdiagram',
             arguments: [uri],
         };
         this.contextValue = 'recentFile';
@@ -182,7 +182,7 @@ export class RecentProvider implements vscode.TreeDataProvider<RecentItem> {
         }
 
         return this.recentFiles.map((f) => {
-            const label = path.basename(f.uri.fsPath, '.flowchart');
+            const label = path.basename(f.uri.fsPath, '.fluxdiagram');
             return new RecentItem(label, f.uri, f.accessedAt);
         });
     }
@@ -190,32 +190,32 @@ export class RecentProvider implements vscode.TreeDataProvider<RecentItem> {
 
 // Register all sidebar providers
 export function registerSidebarProviders(context: vscode.ExtensionContext): {
-    flowcharts: FlowchartsProvider;
+    flowcharts: FluxdiagramsProvider;
     templates: TemplatesProvider;
     recent: RecentProvider;
 } {
-    const flowchartsProvider = new FlowchartsProvider();
+    const fluxdiagramsProvider = new FluxdiagramsProvider();
     const templatesProvider = new TemplatesProvider();
     const recentProvider = new RecentProvider();
 
     context.subscriptions.push(
-        vscode.window.registerTreeDataProvider('flowchartBuilder.flowcharts', flowchartsProvider),
-        vscode.window.registerTreeDataProvider('flowchartBuilder.templates', templatesProvider),
-        vscode.window.registerTreeDataProvider('flowchartBuilder.recent', recentProvider)
+        vscode.window.registerTreeDataProvider('fluxDiagram.fluxdiagrams', fluxdiagramsProvider),
+        vscode.window.registerTreeDataProvider('fluxDiagram.templates', templatesProvider),
+        vscode.window.registerTreeDataProvider('fluxDiagram.recent', recentProvider)
     );
 
-    // Refresh flowcharts when files change
-    const watcher = vscode.workspace.createFileSystemWatcher('**/*.flowchart');
-    watcher.onDidCreate(() => flowchartsProvider.refresh());
-    watcher.onDidDelete(() => flowchartsProvider.refresh());
+    // Refresh fluxdiagrams when files change
+    const watcher = vscode.workspace.createFileSystemWatcher('**/*.fluxdiagram');
+    watcher.onDidCreate(() => fluxdiagramsProvider.refresh());
+    watcher.onDidDelete(() => fluxdiagramsProvider.refresh());
     context.subscriptions.push(watcher);
 
     // Register refresh command
     context.subscriptions.push(
-        vscode.commands.registerCommand('flowchartBuilder.refreshFlowcharts', () => {
-            flowchartsProvider.refresh();
+        vscode.commands.registerCommand('fluxDiagram.refreshFluxdiagrams', () => {
+            fluxdiagramsProvider.refresh();
         })
     );
 
-    return { flowcharts: flowchartsProvider, templates: templatesProvider, recent: recentProvider };
+    return { flowcharts: fluxdiagramsProvider, templates: templatesProvider, recent: recentProvider };
 }
