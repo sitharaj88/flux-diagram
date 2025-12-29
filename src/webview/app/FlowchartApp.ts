@@ -189,19 +189,26 @@ export class FlowchartApp {
         }
     }
 
+    private saveTimeout: number | null = null;
+
     private saveDocument(): void {
         if (!this.document) { return; }
 
         this.document.metadata.updatedAt = Date.now();
         this.document.viewport = this.canvas.getViewport();
 
-        this.vscode.postMessage({
-            type: 'save',
-            payload: this.document,
-        });
+        // Debounce save to avoid UI lag
+        if (this.saveTimeout) {
+            window.clearTimeout(this.saveTimeout);
+        }
 
-        this.isDirty = false;
-        this.showToast('Saved', 'success');
+        this.saveTimeout = window.setTimeout(() => {
+            this.vscode.postMessage({
+                type: 'save',
+                payload: this.document,
+            });
+            this.isDirty = false;
+        }, 500);
     }
 
     private pushHistory(): void {
