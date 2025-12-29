@@ -133,6 +133,8 @@ export class FlowchartApp {
             };
         } else {
             this.document = doc;
+            // Migrate nodes to ensure all style properties have defaults
+            this.migrateNodeStyles();
         }
 
         // Update UI
@@ -145,6 +147,34 @@ export class FlowchartApp {
         this.undoStack = [];
         this.redoStack = [];
         this.updateUndoRedoButtons();
+    }
+
+    private migrateNodeStyles(): void {
+        if (!this.document) { return; }
+
+        const defaultStyle = {
+            backgroundColor: '#ffffff',
+            borderColor: '#6366f1',
+            borderWidth: 2,
+            borderRadius: 8,
+            textColor: '#1e1e2e',
+            fontSize: 14,
+            fontFamily: 'Inter, system-ui, sans-serif',
+            fontWeight: 'normal' as const,
+            textAlign: 'center' as const,
+            opacity: 1,
+            shadow: true,
+        };
+
+        for (const node of this.document.nodes) {
+            // Ensure style object exists
+            if (!node.style) {
+                node.style = { ...defaultStyle };
+            } else {
+                // Fill in any missing properties with defaults
+                node.style = { ...defaultStyle, ...node.style };
+            }
+        }
     }
 
     private saveDocument(): void {
@@ -1309,7 +1339,7 @@ export class FlowchartApp {
         </div>
         <div class="property-row">
           <label for="prop-fontsize">Font Size</label>
-          <input type="number" id="prop-fontsize" value="${node.style.fontSize}" min="8" max="72" />
+          <input type="number" id="prop-fontsize" value="${node.style.fontSize ?? 14}" min="8" max="72" />
         </div>
       </div>
       

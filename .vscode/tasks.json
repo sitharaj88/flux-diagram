@@ -5,9 +5,29 @@
             "type": "npm",
             "script": "watch",
             "group": "build",
-            "problemMatcher": "$esbuild-watch",
             "isBackground": true,
             "label": "npm: watch",
+            "problemMatcher": {
+                "owner": "typescript",
+                "source": "esbuild",
+                "fileLocation": [
+                    "relative",
+                    "${workspaceFolder}"
+                ],
+                "pattern": {
+                    "regexp": "^(.+):(\\d+):(\\d+): (error|warning): (.+)$",
+                    "file": 1,
+                    "line": 2,
+                    "column": 3,
+                    "severity": 4,
+                    "message": 5
+                },
+                "background": {
+                    "activeOnStart": true,
+                    "beginsPattern": "^🔨 Building",
+                    "endsPattern": "^(✅ Build complete|❌ Build failed)"
+                }
+            },
             "presentation": {
                 "reveal": "never",
                 "panel": "dedicated"
@@ -20,7 +40,7 @@
                 "kind": "build",
                 "isDefault": true
             },
-            "problemMatcher": "$tsc",
+            "problemMatcher": [],
             "label": "npm: build"
         },
         {

@@ -117,6 +117,7 @@ async function build() {
             await Promise.all([extContext.watch(), webContext.watch()]);
 
             console.log('👀 Watching for changes...');
+            console.log('✅ Build complete!');
         } else {
             // Single build
             await Promise.all([esbuild.build(extensionConfig), esbuild.build(webviewConfig)]);
