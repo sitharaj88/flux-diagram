@@ -835,16 +835,31 @@ export class FlowchartApp {
             this.showSettings();
         });// Panel Toggles
         const togglePanel = (panelId: string) => {
-            const panels = ['node-palette', 'templates-panel', 'layers-panel'];
-            panels.forEach(id => {
-                const el = document.getElementById(id);
+            const panels = [
+                { id: 'node-palette', menu: 'menu-shapes' },
+                { id: 'templates-panel', menu: 'menu-templates' },
+                { id: 'layers-panel', menu: 'menu-layers' }
+            ];
+
+            panels.forEach(p => {
+                const el = document.getElementById(p.id);
+                const menu = document.getElementById(p.menu);
+
                 if (el) {
-                    if (id === panelId) {
-                        el.style.display = el.style.display === 'none' ? 'flex' : 'none';
-                        el.classList.toggle('visible', el.style.display === 'flex');
+                    if (p.id === panelId) {
+                        const isVisible = el.style.display !== 'none';
+                        el.style.display = isVisible ? 'none' : 'flex';
+                        el.classList.toggle('visible', !isVisible);
+                        if (menu) {
+                            menu.classList.toggle('active', !isVisible);
+                        }
                     } else {
+                        // Close other panels (optional behavior, keeping user's implicit "switch" behavior)
                         el.style.display = 'none';
                         el.classList.remove('visible');
+                        if (menu) {
+                            menu.classList.remove('active');
+                        }
                     }
                 }
             });
@@ -863,6 +878,54 @@ export class FlowchartApp {
         document.getElementById('templates-close')?.addEventListener('click', () => {
             const panel = document.getElementById('templates-panel');
             if (panel) { panel.style.display = 'none'; }
+        });
+
+        // Layer Actions
+        const layersList = document.getElementById('layers-list');
+
+        // Initial layer selection
+        if (layersList) {
+            const defaultLayer = layersList.querySelector('.layer-item');
+            defaultLayer?.addEventListener('click', () => {
+                Array.from(layersList.children).forEach(c => c.classList.remove('active'));
+                defaultLayer.classList.add('active');
+            });
+        }
+
+        document.getElementById('layer-add')?.addEventListener('click', () => {
+            if (layersList) {
+                const count = layersList.children.length + 1;
+                const layer = document.createElement('div');
+                layer.className = 'layer-item active';
+                layer.dataset.layer = `layer-${Date.now()}`;
+                layer.innerHTML = `
+                    <span class="layer-visibility">👁</span>
+                    <span class="layer-name">Layer ${count}</span>
+                    <span class="layer-lock">🔓</span>
+                `;
+
+                layer.addEventListener('click', () => {
+                    Array.from(layersList.children).forEach(c => c.classList.remove('active'));
+                    layer.classList.add('active');
+                });
+
+                // Deactivate others
+                Array.from(layersList.children).forEach(c => c.classList.remove('active'));
+                layersList.appendChild(layer);
+            }
+        });
+
+        document.getElementById('layer-delete')?.addEventListener('click', () => {
+            if (layersList) {
+                const active = layersList.querySelector('.layer-item.active');
+                if (active && layersList.children.length > 1) {
+                    active.remove();
+                    // Activate first one if available
+                    if (layersList.firstElementChild) {
+                        layersList.firstElementChild.classList.add('active');
+                    }
+                }
+            }
         });
 
         document.getElementById('layers-close')?.addEventListener('click', () => {

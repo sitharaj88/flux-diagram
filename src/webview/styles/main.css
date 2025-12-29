@@ -1486,3 +1486,82 @@ kbd {
     opacity: 1;
   }
 }
+
+/* Layers Panel Styles */
+.layers-toolbar {
+  display: flex;
+  gap: 8px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-sidebar-bg);
+}
+
+.layers-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid transparent;
+  background: transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--color-icon);
+  transition: all 0.2s;
+}
+
+.layers-btn:hover {
+  background: var(--color-hover);
+  color: var(--color-text);
+  border-color: var(--color-border);
+}
+
+.layers-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.layer-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  font-size: 13px;
+  transition: all 0.2s;
+  user-select: none;
+}
+
+.layer-item:hover {
+  background: var(--color-hover);
+  color: var(--color-text);
+}
+
+.layer-item.active {
+  background: var(--color-item-bg-active);
+  color: var(--color-primary);
+  font-weight: 500;
+}
+
+.layer-visibility,
+.layer-lock {
+  width: 24px;
+  text-align: center;
+  opacity: 0.6;
+  cursor: pointer;
+}
+
+.layer-visibility:hover,
+.layer-lock:hover {
+  opacity: 1;
+}
+
+.layer-name {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
