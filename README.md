@@ -4,9 +4,9 @@
   <p><strong>The Professional Flowchart & Diagram Builder for VS Code</strong></p>
   
   [![VS Code](https://img.shields.io/badge/VS%20Code-1.85%2B-007ACC.svg?style=flat&logo=visual-studio-code&logoColor=white)](https://marketplace.visualstudio.com/vscode)
-  [![License](https://img.shields.io/badge/License-Apache_2.0-green.svg?style=flat)](LICENSE)
+  [![License](https://img.shields.io/badge/License-Apache_2.0-green.svg?style=flat)](https://github.com/sitharaj88/flux-diagram/blob/main/LICENSE)
   [![TypeScript](https://img.shields.io/badge/TypeScript-5.3-3178C6.svg?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-  [![Version](https://img.shields.io/badge/version-1.0.0-blue.svg?style=flat)](package.json)
+  [![Version](https://img.shields.io/badge/version-1.0.0-blue.svg?style=flat)](https://github.com/sitharaj88/flux-diagram/blob/main/package.json)
 
   <p>
     Design beautiful, complex flowcharts and diagrams directly within VS Code. <br>
