@@ -33,7 +33,7 @@ export class FlowchartApp {
     private undoStack: FlowchartDocument[] = [];
     private redoStack: FlowchartDocument[] = [];
     private isDirty = false;
-
+    private activeLayerId: string = 'default';
 
     public getSettings(): FlowchartDocument['settings'] | undefined {
         return this.document?.settings;
@@ -122,6 +122,9 @@ export class FlowchartApp {
                 },
                 nodes: [],
                 edges: [],
+                layers: [
+                    { id: 'default', name: 'Default Layer', visible: true, locked: false }
+                ],
                 viewport: { x: 0, y: 0, scale: 1 },
                 settings: {
                     gridSize: 20,
@@ -131,8 +134,16 @@ export class FlowchartApp {
                     theme: 'auto',
                 },
             };
+            this.activeLayerId = 'default';
         } else {
             this.document = doc;
+            // Ensure layers exist
+            if (!this.document.layers || this.document.layers.length === 0) {
+                this.document.layers = [{ id: 'default', name: 'Default Layer', visible: true, locked: false }];
+            }
+            // Set active layer to first one
+            this.activeLayerId = this.document.layers[0].id;
+
             // Migrate nodes to ensure all style properties have defaults
             this.migrateNodeStyles();
         }
@@ -140,6 +151,7 @@ export class FlowchartApp {
         // Update UI
         this.updateDocumentTitle();
         this.render();
+        this.renderLayers();
         this.canvas.setViewport(this.document.viewport);
         this.minimap.update(this.document.nodes);
 
@@ -333,6 +345,7 @@ export class FlowchartApp {
                 visible: true,
                 zIndex: this.document!.nodes.length,
             },
+            layerId: this.activeLayerId,
         };
     }
 
@@ -661,141 +674,12 @@ export class FlowchartApp {
         this.nodeRenderer.render(visibleNodes, this.selectedNodeIds);
         this.edgeRenderer.render(this.document.edges, visibleNodes, this.selectedEdgeIds);
 
-        this.renderLayersPanel();
+        this.edgeRenderer.render(this.document.edges, visibleNodes, this.selectedEdgeIds);
+
+        this.renderLayers();
     }
 
-    private renderLayersPanel(): void {
-        const container = document.getElementById('layers-panel');
-        if (!container) { return; }
 
-        // Ensure layers exist and default layer is present
-        if (!this.document!.layers) {
-            this.document!.layers = [];
-        }
-        if (this.document!.layers.length === 0) {
-            this.document!.layers.push(
-                { id: 'default', name: 'Default Layer', visible: true, locked: false }
-            );
-            // Assign existing nodes to default layer
-            this.document!.nodes.forEach(n => { if (!n.layerId) { n.layerId = 'default'; } });
-        }
-
-        const layersList = this.document!.layers.map(layer => `
-            <div class="layer-item ${layer.visible ? '' : 'start-hidden'} ${layer.locked ? 'locked' : ''} ${this.activeLayerId === layer.id ? 'active' : ''}" data-layer-id="${layer.id}">
-                <div class="layer-actions">
-                    <span class="layer-visibility icon-btn" title="Toggle Visibility">${layer.visible ? '👁️' : '🚫'}</span>
-                    <span class="layer-lock icon-btn" title="Toggle Lock">${layer.locked ? '🔒' : '🔓'}</span>
-                </div>
-                <span class="layer-name" contenteditable="true">${this.escapeHtml(layer.name)}</span>
-                <span class="layer-delete icon-btn" title="Delete Layer">🗑️</span>
-            </div>
-        `).join('');
-
-        const header = container.querySelector('.palette-header');
-        let content = container.querySelector('.layers-content');
-        if (!content) {
-            content = document.createElement('div');
-            content.className = 'layers-content';
-            container.appendChild(content);
-
-            // Add "Add Layer" button if not present
-            if (!header?.querySelector('#add-layer-btn')) {
-                const addBtn = document.createElement('button');
-                addBtn.id = 'add-layer-btn';
-                addBtn.className = 'icon-btn';
-                addBtn.textContent = '+';
-                addBtn.title = 'Add Layer';
-                addBtn.addEventListener('click', () => this.addLayer());
-                header?.appendChild(addBtn);
-            }
-        }
-
-        content.innerHTML = layersList;
-
-        // Attach listeners
-        content.querySelectorAll('.layer-visibility').forEach(el => {
-            el.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const id = (e.target as HTMLElement).closest('.layer-item')!.getAttribute('data-layer-id')!;
-                const layer = this.document!.layers.find(l => l.id === id);
-                if (layer) {
-                    layer.visible = !layer.visible;
-                    this.render();
-                }
-            });
-        });
-
-        content.querySelectorAll('.layer-lock').forEach(el => {
-            el.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const id = (e.target as HTMLElement).closest('.layer-item')!.getAttribute('data-layer-id')!;
-                const layer = this.document!.layers.find(l => l.id === id);
-                if (layer) {
-                    layer.locked = !layer.locked;
-                    this.render();
-                }
-            });
-        });
-
-        content.querySelectorAll('.layer-delete').forEach(el => {
-            el.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const id = (e.target as HTMLElement).closest('.layer-item')!.getAttribute('data-layer-id')!;
-                this.deleteLayer(id);
-            });
-        });
-
-        content.querySelectorAll('.layer-item').forEach(el => {
-            el.addEventListener('click', (_e) => {
-                const id = el.getAttribute('data-layer-id')!;
-                this.activeLayerId = id;
-                this.renderLayersPanel();
-            });
-        });
-
-        content.querySelectorAll('.layer-name').forEach(el => {
-            el.addEventListener('blur', (e) => {
-                const id = (e.target as HTMLElement).closest('.layer-item')!.getAttribute('data-layer-id')!;
-                const layer = this.document!.layers.find(l => l.id === id);
-                if (layer) {
-                    layer.name = (e.target as HTMLElement).innerText;
-                }
-            });
-        });
-    }
-
-    private activeLayerId: string = 'default';
-
-    private addLayer(): void {
-        const id = this.generateId();
-        this.document!.layers.push({
-            id,
-            name: `Layer ${this.document!.layers.length + 1}`,
-            visible: true,
-            locked: false
-        });
-        this.activeLayerId = id;
-        this.render();
-    }
-
-    private deleteLayer(id: string): void {
-        if (this.document!.layers.length <= 1) {
-            this.showToast('Cannot delete the last layer', 'error');
-            return;
-        }
-
-        this.document!.layers = this.document!.layers.filter(l => l.id !== id);
-        this.document!.nodes.forEach(n => {
-            if (n.layerId === id) {
-                n.layerId = this.document!.layers[0].id; // Move to first layer
-            }
-        });
-
-        if (this.activeLayerId === id) {
-            this.activeLayerId = this.document!.layers[0].id;
-        }
-        this.render();
-    }
 
     // ==========================================================================
     // UI Setup
@@ -880,54 +764,6 @@ export class FlowchartApp {
             if (panel) { panel.style.display = 'none'; }
         });
 
-        // Layer Actions
-        const layersList = document.getElementById('layers-list');
-
-        // Initial layer selection
-        if (layersList) {
-            const defaultLayer = layersList.querySelector('.layer-item');
-            defaultLayer?.addEventListener('click', () => {
-                Array.from(layersList.children).forEach(c => c.classList.remove('active'));
-                defaultLayer.classList.add('active');
-            });
-        }
-
-        document.getElementById('layer-add')?.addEventListener('click', () => {
-            if (layersList) {
-                const count = layersList.children.length + 1;
-                const layer = document.createElement('div');
-                layer.className = 'layer-item active';
-                layer.dataset.layer = `layer-${Date.now()}`;
-                layer.innerHTML = `
-                    <span class="layer-visibility">👁</span>
-                    <span class="layer-name">Layer ${count}</span>
-                    <span class="layer-lock">🔓</span>
-                `;
-
-                layer.addEventListener('click', () => {
-                    Array.from(layersList.children).forEach(c => c.classList.remove('active'));
-                    layer.classList.add('active');
-                });
-
-                // Deactivate others
-                Array.from(layersList.children).forEach(c => c.classList.remove('active'));
-                layersList.appendChild(layer);
-            }
-        });
-
-        document.getElementById('layer-delete')?.addEventListener('click', () => {
-            if (layersList) {
-                const active = layersList.querySelector('.layer-item.active');
-                if (active && layersList.children.length > 1) {
-                    active.remove();
-                    // Activate first one if available
-                    if (layersList.firstElementChild) {
-                        layersList.firstElementChild.classList.add('active');
-                    }
-                }
-            }
-        });
-
         document.getElementById('layers-close')?.addEventListener('click', () => {
             const panel = document.getElementById('layers-panel');
             if (panel) { panel.style.display = 'none'; }
@@ -939,6 +775,126 @@ export class FlowchartApp {
         });
 
         this.setupTemplates();
+        this.setupLayerActions();
+    }
+
+    private renderLayers(): void {
+        const list = document.getElementById('layers-list');
+        if (!list || !this.document) { return; }
+
+        list.innerHTML = '';
+
+        this.document.layers.forEach(layer => {
+            const el = document.createElement('div');
+            el.className = `layer-item ${layer.id === this.activeLayerId ? 'active' : ''}`;
+            el.dataset.id = layer.id;
+
+            // Visibility
+            const visSpan = document.createElement('span');
+            visSpan.className = 'layer-visibility';
+            visSpan.textContent = layer.visible ? '👁' : '─'; // Or use SVG
+            visSpan.title = layer.visible ? 'Hide Layer' : 'Show Layer';
+            visSpan.onclick = (e) => {
+                e.stopPropagation();
+                this.toggleLayerVisibility(layer.id);
+            };
+
+            // Name (editable)
+            const nameSpan = document.createElement('span');
+            nameSpan.className = 'layer-name';
+            nameSpan.textContent = layer.name;
+            nameSpan.ondblclick = (e) => {
+                e.preventDefault();
+                this.renameLayer(layer.id);
+            };
+
+            // Lock
+            const lockSpan = document.createElement('span');
+            lockSpan.className = 'layer-lock';
+            lockSpan.textContent = layer.locked ? '🔒' : '🔓';
+            lockSpan.title = layer.locked ? 'Unlock Layer' : 'Lock Layer';
+            lockSpan.onclick = (e) => {
+                e.stopPropagation();
+                this.toggleLayerLock(layer.id);
+            };
+
+            el.appendChild(visSpan);
+            el.appendChild(nameSpan);
+            el.appendChild(lockSpan);
+
+            el.onclick = () => {
+                if (this.activeLayerId !== layer.id) {
+                    this.activeLayerId = layer.id;
+                    this.renderLayers();
+                }
+            };
+
+            list.appendChild(el);
+        });
+    }
+
+    private toggleLayerVisibility(id: string): void {
+        const layer = this.document?.layers.find(l => l.id === id);
+        if (layer) {
+            layer.visible = !layer.visible;
+            this.renderLayers();
+            this.render(); // Re-render canvas to update node visibility
+            this.saveDocument();
+        }
+    }
+
+    private toggleLayerLock(id: string): void {
+        const layer = this.document?.layers.find(l => l.id === id);
+        if (layer) {
+            layer.locked = !layer.locked;
+            this.renderLayers();
+            this.saveDocument();
+        }
+    }
+
+    private renameLayer(id: string): void {
+        const layer = this.document?.layers.find(l => l.id === id);
+        if (layer) {
+            // Simple prompt for now
+            const newName = prompt('Enter layer name:', layer.name);
+            if (newName && newName.trim()) {
+                layer.name = newName.trim();
+                this.renderLayers();
+                this.saveDocument();
+            }
+        }
+    }
+
+    private setupLayerActions(): void {
+        document.getElementById('layer-add')?.addEventListener('click', () => {
+            if (!this.document) { return; }
+            const count = this.document.layers.length + 1;
+            const newLayer = {
+                id: this.generateId(),
+                name: `Layer ${count}`,
+                visible: true,
+                locked: false
+            };
+            this.document.layers.push(newLayer);
+            this.activeLayerId = newLayer.id;
+            this.renderLayers();
+            this.saveDocument();
+        });
+
+        document.getElementById('layer-delete')?.addEventListener('click', () => {
+            if (!this.document || this.document.layers.length <= 1) { return; }
+
+            // Remove active layer
+            const idx = this.document.layers.findIndex(l => l.id === this.activeLayerId);
+            if (idx !== -1) {
+                this.document.layers.splice(idx, 1);
+                // Select a new layer
+                this.activeLayerId = this.document.layers[Math.max(0, idx - 1)].id;
+                this.renderLayers();
+                this.render(); // Update canvas
+                this.saveDocument();
+            }
+        });
     }
 
     private showAlignmentMenu(): void {
