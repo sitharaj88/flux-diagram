@@ -159,7 +159,7 @@ export class FlowchartApp {
             borderRadius: 8,
             textColor: '#1e1e2e',
             fontSize: 14,
-            fontFamily: 'Inter, system-ui, sans-serif',
+            fontFamily: 'Roboto, sans-serif',
             fontWeight: 'normal' as const,
             textAlign: 'center' as const,
             opacity: 1,
@@ -319,7 +319,7 @@ export class FlowchartApp {
                 borderRadius: 8,
                 textColor: '#1e1e2e',
                 fontSize: 14,
-                fontFamily: 'Inter, system-ui, sans-serif',
+                fontFamily: 'Roboto, sans-serif',
                 fontWeight: 'normal',
                 textAlign: 'center',
                 opacity: 1,
@@ -1341,6 +1341,30 @@ export class FlowchartApp {
           <label for="prop-fontsize">Font Size</label>
           <input type="number" id="prop-fontsize" value="${node.style.fontSize ?? 14}" min="8" max="72" />
         </div>
+        <div class="property-row">
+          <label for="prop-fontfamily">Font Family</label>
+          <select id="prop-fontfamily">
+            <option value="Roboto, sans-serif" ${node.style.fontFamily?.includes('Roboto') ? 'selected' : ''}>Roboto (Material)</option>
+            <option value="Inter, sans-serif" ${node.style.fontFamily?.includes('Inter') ? 'selected' : ''}>Inter</option>
+            <option value="Open Sans, sans-serif" ${node.style.fontFamily?.includes('Open Sans') ? 'selected' : ''}>Open Sans</option>
+            <option value="Lato, sans-serif" ${node.style.fontFamily?.includes('Lato') ? 'selected' : ''}>Lato</option>
+            <option value="Poppins, sans-serif" ${node.style.fontFamily?.includes('Poppins') ? 'selected' : ''}>Poppins</option>
+            <option value="Montserrat, sans-serif" ${node.style.fontFamily?.includes('Montserrat') ? 'selected' : ''}>Montserrat</option>
+            <option value="Source Sans Pro, sans-serif" ${node.style.fontFamily?.includes('Source Sans') ? 'selected' : ''}>Source Sans Pro</option>
+            <option value="Nunito, sans-serif" ${node.style.fontFamily?.includes('Nunito') ? 'selected' : ''}>Nunito</option>
+            <option value="Raleway, sans-serif" ${node.style.fontFamily?.includes('Raleway') ? 'selected' : ''}>Raleway</option>
+            <option value="Ubuntu, sans-serif" ${node.style.fontFamily?.includes('Ubuntu') ? 'selected' : ''}>Ubuntu</option>
+            <option value="Fira Code, monospace" ${node.style.fontFamily?.includes('Fira Code') ? 'selected' : ''}>Fira Code (Mono)</option>
+            <option value="JetBrains Mono, monospace" ${node.style.fontFamily?.includes('JetBrains') ? 'selected' : ''}>JetBrains Mono</option>
+          </select>
+        </div>
+        <div class="property-row">
+          <label for="prop-fontweight">Font Weight</label>
+          <select id="prop-fontweight">
+            <option value="normal" ${node.style.fontWeight === 'normal' ? 'selected' : ''}>Normal</option>
+            <option value="bold" ${node.style.fontWeight === 'bold' ? 'selected' : ''}>Bold</option>
+          </select>
+        </div>
       </div>
       
       <div class="property-group">
@@ -1429,6 +1453,12 @@ export class FlowchartApp {
         });
         document.getElementById('prop-fontsize')?.addEventListener('input', (e) => {
             this.updateNodeStyle(node.id, { fontSize: parseInt((e.target as HTMLInputElement).value, 10) });
+        });
+        document.getElementById('prop-fontfamily')?.addEventListener('change', (e) => {
+            this.updateNodeStyle(node.id, { fontFamily: (e.target as HTMLSelectElement).value });
+        });
+        document.getElementById('prop-fontweight')?.addEventListener('change', (e) => {
+            this.updateNodeStyle(node.id, { fontWeight: (e.target as HTMLSelectElement).value as 'normal' | 'bold' });
         });
 
         // Position
@@ -1878,7 +1908,7 @@ export class FlowchartApp {
             borderRadius: 8,
             textColor: text,
             fontSize: 14,
-            fontFamily: 'Inter, sans-serif',
+            fontFamily: 'Roboto, sans-serif',
             fontWeight: 'normal',
             textAlign: 'center',
             opacity: 1,

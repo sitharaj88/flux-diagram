@@ -88,7 +88,7 @@ export function getDefaultNodeStyle(): NodeStyle {
         borderRadius: 8,
         textColor: '#1e1e2e',
         fontSize: 14,
-        fontFamily: 'Inter, system-ui, sans-serif',
+        fontFamily: 'Roboto, sans-serif',
         fontWeight: 'normal',
         textAlign: 'center',
         opacity: 1,
