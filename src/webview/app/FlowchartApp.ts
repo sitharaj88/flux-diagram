@@ -854,12 +854,27 @@ export class FlowchartApp {
         document.getElementById('menu-templates')?.addEventListener('click', () => togglePanel('templates-panel'));
         document.getElementById('menu-layers')?.addEventListener('click', () => togglePanel('layers-panel'));
 
-        // Close buttons for new panels
-        document.getElementById('palette-collapse')?.addEventListener('click', () => {
-            document.getElementById('node-palette')!.style.display = 'none';
+        // Close buttons for panels
+        document.getElementById('shapes-close')?.addEventListener('click', () => {
+            const panel = document.getElementById('node-palette');
+            if (panel) { panel.style.display = 'none'; }
         });
 
-        // TODO: Add close listeners for other panels if they exist in HTML
+        document.getElementById('templates-close')?.addEventListener('click', () => {
+            const panel = document.getElementById('templates-panel');
+            if (panel) { panel.style.display = 'none'; }
+        });
+
+        document.getElementById('layers-close')?.addEventListener('click', () => {
+            const panel = document.getElementById('layers-panel');
+            if (panel) { panel.style.display = 'none'; }
+        });
+
+        document.getElementById('properties-close')?.addEventListener('click', () => {
+            const panel = document.getElementById('properties-panel');
+            if (panel) { panel.classList.add('collapsed'); }
+        });
+
         this.setupTemplates();
     }
 

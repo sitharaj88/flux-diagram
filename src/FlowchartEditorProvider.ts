@@ -268,7 +268,11 @@ export class FlowchartEditorProvider implements vscode.CustomTextEditorProvider 
       <aside class="sidebar node-palette" id="node-palette">
         <div class="palette-header">
           <span>Shapes</span>
-          <button class="panel-collapse" id="palette-collapse" title="Collapse">◀</button>
+          <button class="panel-close-btn" id="shapes-close" title="Close Shapes">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M1 1L13 13M1 13L13 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </button>
         </div>
         <div class="palette-search">
           <input type="text" placeholder="Search shapes..." id="shape-search">
@@ -359,7 +363,11 @@ export class FlowchartEditorProvider implements vscode.CustomTextEditorProvider 
       <aside class="sidebar templates-panel" id="templates-panel" style="display: none;">
         <div class="palette-header">
           <span>Templates</span>
-          <button class="panel-collapse" id="templates-collapse" title="Collapse">◀</button>
+          <button class="panel-close-btn" id="templates-close" title="Close Templates">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M1 1L13 13M1 13L13 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </button>
         </div>
         <div class="palette-items">
           <div class="template-item" data-template="process">
@@ -385,7 +393,11 @@ export class FlowchartEditorProvider implements vscode.CustomTextEditorProvider 
       <aside class="sidebar layers-panel" id="layers-panel" style="display: none;">
         <div class="palette-header">
           <span>Layers</span>
-          <button class="panel-collapse" id="layers-collapse" title="Collapse">◀</button>
+          <button class="panel-close-btn" id="layers-close" title="Close Layers">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M1 1L13 13M1 13L13 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </button>
         </div>
         <div class="layers-toolbar">
           <button class="layers-btn" id="layer-add" title="Add Layer">+</button>
@@ -421,8 +433,12 @@ export class FlowchartEditorProvider implements vscode.CustomTextEditorProvider 
 
       <aside class="sidebar properties-panel" id="properties-panel">
         <div class="panel-header">
-          <span>Properties</span>
-          <button class="panel-close" id="panel-close">×</button>
+          <span class="panel-title">Properties</span>
+          <button class="panel-close-btn" id="properties-close" title="Close Properties Panel">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M1 1L13 13M1 13L13 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </button>
         </div>
         <div class="panel-content" id="panel-content">
           <div class="empty-state">

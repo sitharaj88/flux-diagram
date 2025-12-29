@@ -399,7 +399,9 @@ textarea:focus-visible {
 }
 
 .panel-collapse,
-.panel-close {
+.panel-close,
+.panel-toggle,
+.panel-close-btn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -411,15 +413,52 @@ textarea:focus-visible {
   color: var(--color-text-muted);
   cursor: pointer;
   border-radius: 6px;
-  transition: all 0.15s;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.panel-toggle svg,
+.panel-close-btn svg {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .panel-collapse:hover,
-.panel-close:hover {
+.panel-close:hover,
+.panel-toggle:hover,
+.panel-close-btn:hover {
   background: var(--color-hover);
   border-color: var(--color-border);
   color: var(--color-text);
 }
+
+.panel-close-btn:hover svg {
+  transform: scale(1.1);
+}
+
+.panel-toggle:active,
+.panel-close-btn:active {
+  transform: scale(0.95);
+}
+
+/* Collapsed state for properties panel */
+.sidebar.properties-panel.collapsed {
+  width: 44px;
+  min-width: 44px;
+}
+
+.sidebar.properties-panel.collapsed .panel-header .panel-title {
+  display: none;
+}
+
+.sidebar.properties-panel.collapsed .panel-content {
+  display: none;
+}
+
+.sidebar.properties-panel.collapsed .panel-header {
+  justify-content: center;
+  padding: 12px;
+  border-bottom: none;
+}
+
 
 /* Search Input */
 .palette-search {
