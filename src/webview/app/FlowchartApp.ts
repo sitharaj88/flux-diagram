@@ -1248,7 +1248,11 @@ export class FlowchartApp {
             e.preventDefault();
             const type = (e).dataTransfer?.getData('node-type') as NodeType;
             if (type) {
-                const worldPos = this.canvas.screenToWorld({ x: e.clientX, y: e.clientY });
+                const rect = container.getBoundingClientRect();
+                const worldPos = this.canvas.screenToWorld({
+                    x: e.clientX - rect.left,
+                    y: e.clientY - rect.top
+                });
                 this.addNode(type, worldPos);
             }
         });
