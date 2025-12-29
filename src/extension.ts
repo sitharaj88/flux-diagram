@@ -181,13 +181,10 @@ export function activate(context: vscode.ExtensionContext): void {
             void vscode.commands.executeCommand('flowchartBuilder.createFromTemplate', 'swimlane');
         })
     );
-
-    // Log activation
-    console.log('Flowchart Builder extension activated');
 }
 
 export function deactivate(): void {
-    console.log('Flowchart Builder extension deactivated');
+    // Extension deactivation cleanup (if needed)
 }
 
 // Simple ID generator for the extension
