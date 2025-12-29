@@ -1549,14 +1549,19 @@ kbd {
 .layer-visibility,
 .layer-lock {
   width: 24px;
-  text-align: center;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   opacity: 0.6;
   cursor: pointer;
+  border-radius: 4px;
 }
 
 .layer-visibility:hover,
 .layer-lock:hover {
   opacity: 1;
+  background-color: var(--color-hover);
 }
 
 .layer-name {
@@ -1564,4 +1569,11 @@ kbd {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  padding: 2px 4px;
+  border-radius: 2px;
+  cursor: text;
+}
+
+.layer-name:hover {
+  background-color: var(--color-hover);
 }

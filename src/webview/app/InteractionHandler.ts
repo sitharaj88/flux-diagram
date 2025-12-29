@@ -93,6 +93,7 @@ export class InteractionHandler {
         }
 
         // Check if clicking on a node - start drag
+        // Check if clicking on a node - start drag
         const nodeGroup = target.closest('[data-node-id]') as SVGElement;
         if (nodeGroup) {
             const nodeId = nodeGroup.dataset.nodeId!;
@@ -100,6 +101,12 @@ export class InteractionHandler {
             const node = doc?.nodes.find((n) => n.id === nodeId);
 
             if (node) {
+                // Prevent action if layer is locked
+                if (this.app.isLayerLocked(node.layerId) || !this.app.isLayerVisible(node.layerId)) {
+                    // Maybe show a small toast or just ignore?
+                    return;
+                }
+
                 this.isDragging = true;
                 this.dragNodeId = nodeId;
                 this.dragStartPos = { ...node.position };
@@ -120,6 +127,8 @@ export class InteractionHandler {
         // Check if clicking on an edge
         const edgeGroup = target.closest('[data-edge-id]') as SVGElement;
         if (edgeGroup) {
+            // We can check edge locking here if edges belong to layers too, 
+            // but currently checking node locking is most critical
             this.app.selectEdge(edgeGroup.dataset.edgeId!, e.shiftKey);
             return;
         }
@@ -159,6 +168,15 @@ export class InteractionHandler {
             // Highlight target port
             const portGroup = target.closest('.port');
             if (portGroup) {
+                const nodeGroup = portGroup.closest('[data-node-id]') as SVGElement;
+                const nodeId = nodeGroup?.dataset.nodeId;
+                const doc = this.app.getDocument();
+                const node = doc?.nodes.find(n => n.id === nodeId);
+
+                // Don't highlight ports on locked/hidden layers
+                if (node && (this.app.isLayerLocked(node.layerId) || !this.app.isLayerVisible(node.layerId))) {
+                    return;
+                }
                 portGroup.classList.add('port-hover');
             }
             return;
@@ -185,13 +203,20 @@ export class InteractionHandler {
                 const nodeGroup = portGroup.closest('[data-node-id]') as SVGElement;
 
                 if (nodeGroup && nodeGroup.dataset.nodeId !== this.connectionStart.nodeId) {
-                    // Create the edge
-                    this.app.addEdge(
-                        this.connectionStart.nodeId,
-                        this.connectionStart.portId,
-                        nodeGroup.dataset.nodeId!,
-                        portGroup.dataset.portId!
-                    );
+                    const targetNodeId = nodeGroup.dataset.nodeId!;
+                    const doc = this.app.getDocument();
+                    const targetNode = doc?.nodes.find(n => n.id === targetNodeId);
+
+                    // Helper check for locked target
+                    if (!targetNode || (!this.app.isLayerLocked(targetNode.layerId) && this.app.isLayerVisible(targetNode.layerId))) {
+                        // Create the edge
+                        this.app.addEdge(
+                            this.connectionStart.nodeId,
+                            this.connectionStart.portId,
+                            nodeGroup.dataset.nodeId!,
+                            portGroup.dataset.portId!
+                        );
+                    }
                 }
             }
 
@@ -230,6 +255,11 @@ export class InteractionHandler {
             const node = doc?.nodes.find((n) => n.id === nodeId);
 
             if (node) {
+                if (this.app.isLayerLocked(node.layerId) || !this.app.isLayerVisible(node.layerId)) {
+                    // Optionally show toast "Layer is locked"
+                    return;
+                }
+
                 const newLabel = prompt('Enter label:', node.data.label);
                 if (newLabel !== null) {
                     this.app.updateNodeData(nodeId, { label: newLabel });

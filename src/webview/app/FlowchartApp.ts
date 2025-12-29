@@ -674,9 +674,19 @@ export class FlowchartApp {
         this.nodeRenderer.render(visibleNodes, this.selectedNodeIds);
         this.edgeRenderer.render(this.document.edges, visibleNodes, this.selectedEdgeIds);
 
-        this.edgeRenderer.render(this.document.edges, visibleNodes, this.selectedEdgeIds);
-
         this.renderLayers();
+    }
+
+    public isLayerLocked(layerId?: string): boolean {
+        if (!layerId || !this.document) { return false; }
+        const layer = this.document.layers.find(l => l.id === layerId);
+        return layer ? layer.locked : false;
+    }
+
+    public isLayerVisible(layerId?: string): boolean {
+        if (!layerId || !this.document) { return true; }
+        const layer = this.document.layers.find(l => l.id === layerId);
+        return layer ? layer.visible : true;
     }
 
 
@@ -789,11 +799,14 @@ export class FlowchartApp {
             el.className = `layer-item ${layer.id === this.activeLayerId ? 'active' : ''}`;
             el.dataset.id = layer.id;
 
-            // Visibility
+            // Visibility Icon (SVG)
             const visSpan = document.createElement('span');
             visSpan.className = 'layer-visibility';
-            visSpan.textContent = layer.visible ? '👁' : '─'; // Or use SVG
             visSpan.title = layer.visible ? 'Hide Layer' : 'Show Layer';
+            visSpan.innerHTML = layer.visible
+                ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`
+                : `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`;
+
             visSpan.onclick = (e) => {
                 e.stopPropagation();
                 this.toggleLayerVisibility(layer.id);
@@ -803,16 +816,39 @@ export class FlowchartApp {
             const nameSpan = document.createElement('span');
             nameSpan.className = 'layer-name';
             nameSpan.textContent = layer.name;
-            nameSpan.ondblclick = (e) => {
-                e.preventDefault();
-                this.renameLayer(layer.id);
+            nameSpan.setAttribute('contenteditable', 'true');
+
+            // Handle rename on blur or enter
+            const saveRename = () => {
+                const newName = nameSpan.textContent?.trim();
+                if (newName && newName !== layer.name) {
+                    layer.name = newName;
+                    this.saveDocument();
+                } else if (!newName) {
+                    nameSpan.textContent = layer.name; // Revert if empty
+                }
             };
 
-            // Lock
+            nameSpan.onblur = saveRename;
+            nameSpan.onkeydown = (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    nameSpan.blur();
+                }
+                e.stopPropagation(); // Prevent triggering layer selection
+            };
+
+            // Prevent layer selection when clicking text to edit
+            nameSpan.onclick = (e) => e.stopPropagation();
+
+            // Lock Icon (SVG)
             const lockSpan = document.createElement('span');
             lockSpan.className = 'layer-lock';
-            lockSpan.textContent = layer.locked ? '🔒' : '🔓';
             lockSpan.title = layer.locked ? 'Unlock Layer' : 'Lock Layer';
+            lockSpan.innerHTML = layer.locked
+                ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`
+                : `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>`;
+
             lockSpan.onclick = (e) => {
                 e.stopPropagation();
                 this.toggleLayerLock(layer.id);
@@ -822,6 +858,7 @@ export class FlowchartApp {
             el.appendChild(nameSpan);
             el.appendChild(lockSpan);
 
+            // Select layer on click
             el.onclick = () => {
                 if (this.activeLayerId !== layer.id) {
                     this.activeLayerId = layer.id;
@@ -847,23 +884,15 @@ export class FlowchartApp {
         const layer = this.document?.layers.find(l => l.id === id);
         if (layer) {
             layer.locked = !layer.locked;
+            // Deselect items on locked layer if needed?
+            // For now just update UI
             this.renderLayers();
+            this.render(); // Update selection visuals if necessary
             this.saveDocument();
         }
     }
 
-    private renameLayer(id: string): void {
-        const layer = this.document?.layers.find(l => l.id === id);
-        if (layer) {
-            // Simple prompt for now
-            const newName = prompt('Enter layer name:', layer.name);
-            if (newName && newName.trim()) {
-                layer.name = newName.trim();
-                this.renderLayers();
-                this.saveDocument();
-            }
-        }
-    }
+
 
     private setupLayerActions(): void {
         document.getElementById('layer-add')?.addEventListener('click', () => {
