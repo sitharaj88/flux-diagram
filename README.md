@@ -1,18 +1,11 @@
-<div align="center">
-  <img src="media/flux-icon.png" alt="FluxDiagram Logo" width="128" />
-  <h1>FluxDiagram</h1>
-  <p><strong>The Professional Flowchart & Diagram Builder for VS Code</strong></p>
-  
-  [![VS Code](https://img.shields.io/badge/VS%20Code-1.85%2B-007ACC.svg?style=flat&logo=visual-studio-code&logoColor=white)](https://marketplace.visualstudio.com/vscode)
-  [![License](https://img.shields.io/badge/License-Apache_2.0-green.svg?style=flat)](https://github.com/sitharaj88/flux-diagram/blob/main/LICENSE)
-  [![TypeScript](https://img.shields.io/badge/TypeScript-5.3-3178C6.svg?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-  [![Version](https://img.shields.io/badge/version-1.0.1-blue.svg?style=flat)](https://github.com/sitharaj88/flux-diagram/blob/main/package.json)
+![FluxDiagram Logo](media/flux-icon.png)
 
-  <p>
-    Design beautiful, complex flowcharts and diagrams directly within VS Code. <br>
-    Built with modern web technologies, Glassmorphism UI, and high-performance rendering.
-  </p>
-</div>
+# FluxDiagram
+
+**The Professional Flowchart & Diagram Builder for VS Code**
+
+Design beautiful, complex flowcharts and diagrams directly within VS Code.
+Built with modern web technologies, Glassmorphism UI, and high-performance rendering.
 
 ---
 
