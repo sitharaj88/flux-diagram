@@ -10,3 +10,4 @@ esbuild.config.js
 node_modules/**
 media/readme-logo.png
 examples/**
+release_*.sh

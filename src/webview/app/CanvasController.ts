@@ -163,6 +163,11 @@ export class CanvasController {
         };
     }
 
+    getViewportSize(): { width: number; height: number } {
+        const rect = this.container.getBoundingClientRect();
+        return { width: rect.width / this.viewport.scale, height: rect.height / this.viewport.scale };
+    }
+
     onZoomChange(callback: ZoomCallback): void { this.zoomCallbacks.push(callback); }
     getContainerBounds(): DOMRect { return this.container.getBoundingClientRect(); }
 }

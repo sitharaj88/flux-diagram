@@ -197,6 +197,7 @@ export class StateManager {
             },
             nodes: this.graph.getAllNodes(),
             edges: this.graph.getAllEdges(),
+            layers: [{ id: 'default', name: 'Default Layer', visible: true, locked: false }],
             viewport: { ...this.viewport },
             settings: { ...this.settings },
         };

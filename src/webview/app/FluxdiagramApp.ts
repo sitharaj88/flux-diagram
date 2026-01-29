@@ -970,13 +970,37 @@ export class FluxdiagramApp {
         toolbar.id = 'alignment-toolbar';
         toolbar.className = 'floating-toolbar';
         toolbar.innerHTML = `
-            <button title="Align Left" data-align="left">Left</button>
-            <button title="Align Center" data-align="center">Center</button>
-            <button title="Align Right" data-align="right">Right</button>
-            <div class="separator"></div>
-            <button title="Align Top" data-align="top">Top</button>
-            <button title="Align Middle" data-align="middle">Middle</button>
-            <button title="Align Bottom" data-align="bottom">Bottom</button>
+            <div class="toolbar-group">
+                <span class="toolbar-group-label">Align</span>
+                <button title="Align Left" data-align="left">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="4" x2="4" y2="20"/><rect x="8" y="6" width="12" height="4"/><rect x="8" y="14" width="8" height="4"/></svg>
+                </button>
+                <button title="Align Center" data-align="center">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="4" x2="12" y2="20"/><rect x="6" y="6" width="12" height="4"/><rect x="8" y="14" width="8" height="4"/></svg>
+                </button>
+                <button title="Align Right" data-align="right">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="20" y1="4" x2="20" y2="20"/><rect x="4" y="6" width="12" height="4"/><rect x="8" y="14" width="8" height="4"/></svg>
+                </button>
+                <div class="separator"></div>
+                <button title="Align Top" data-align="top">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="4" x2="20" y2="4"/><rect x="6" y="8" width="4" height="12"/><rect x="14" y="8" width="4" height="8"/></svg>
+                </button>
+                <button title="Align Middle" data-align="middle">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="12" x2="20" y2="12"/><rect x="6" y="6" width="4" height="12"/><rect x="14" y="8" width="4" height="8"/></svg>
+                </button>
+                <button title="Align Bottom" data-align="bottom">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="20" x2="20" y2="20"/><rect x="6" y="4" width="4" height="12"/><rect x="14" y="8" width="4" height="8"/></svg>
+                </button>
+            </div>
+            <div class="toolbar-group">
+                <span class="toolbar-group-label">Distribute</span>
+                <button title="Distribute Horizontally" data-distribute="horizontal">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="8" width="4" height="8"/><rect x="10" y="8" width="4" height="8"/><rect x="16" y="8" width="4" height="8"/></svg>
+                </button>
+                <button title="Distribute Vertically" data-distribute="vertical">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="4" width="8" height="4"/><rect x="8" y="10" width="8" height="4"/><rect x="8" y="16" width="8" height="4"/></svg>
+                </button>
+            </div>
         `;
 
         // Position near the selection or center
@@ -995,10 +1019,20 @@ export class FluxdiagramApp {
         document.body.appendChild(toolbar);
 
         toolbar.addEventListener('click', (e) => {
-            const target = e.target as HTMLElement;
-            const type = target.dataset.align;
-            if (type) {
-                this.alignSelectedNodes(type as 'top' | 'right' | 'bottom' | 'left' | 'center' | 'middle');
+            const target = (e.target as HTMLElement).closest('button') as HTMLElement;
+            if (!target) { return; }
+            
+            const alignType = target.dataset.align;
+            const distributeType = target.dataset.distribute;
+            
+            if (alignType) {
+                this.alignSelectedNodes(alignType as 'top' | 'right' | 'bottom' | 'left' | 'center' | 'middle');
+                toolbar.remove();
+            } else if (distributeType === 'horizontal') {
+                this.distributeHorizontally();
+                toolbar.remove();
+            } else if (distributeType === 'vertical') {
+                this.distributeVertically();
                 toolbar.remove();
             }
         });
@@ -1107,52 +1141,59 @@ export class FluxdiagramApp {
                 <h3>Mouse Controls</h3>
                 <div class="setting-item">
                     <div class="setting-label">Pan Canvas</div>
-                    <div class="key-row"><span>Hold </span><kbd>Space</kbd><span> + Drag</span></div>
+                    <div class="key-row"><kbd>Alt</kbd><span> + Drag or Middle Mouse</span></div>
                 </div>
                 <div class="setting-item">
                     <div class="setting-label">Zoom</div>
-                    <div class="key-row"><span>Hold </span><kbd>Alt</kbd><span> + Scroll</span></div>
+                    <div class="key-row"><span>Scroll Wheel</span></div>
                 </div>
                 <div class="setting-item">
                     <div class="setting-label">Connect Nodes</div>
                     <div class="key-row">Drag from Port to Port</div>
                 </div>
+                <div class="setting-item">
+                    <div class="setting-label">Multi-select</div>
+                    <div class="key-row"><kbd>Shift</kbd><span> + Click</span></div>
+                </div>
             </div>
             <div class="settings-group">
-                <h3>Keyboard Shortcuts</h3>
+                <h3>General</h3>
                 <div class="shortcuts-grid">
-                    <div class="shortcut-item">
-                        <span>Save</span>
-                        <kbd>Ctrl+S</kbd>
-                    </div>
-                    <div class="shortcut-item">
-                        <span>Undo</span>
-                        <kbd>Ctrl+Z</kbd>
-                    </div>
-                    <div class="shortcut-item">
-                        <span>Redo</span>
-                        <kbd>Ctrl+Y</kbd>
-                    </div>
-                    <div class="shortcut-item">
-                        <span>Copy</span>
-                        <kbd>Ctrl+C</kbd>
-                    </div>
-                    <div class="shortcut-item">
-                        <span>Paste</span>
-                        <kbd>Ctrl+V</kbd>
-                    </div>
-                    <div class="shortcut-item">
-                        <span>Delete</span>
-                        <kbd>Del</kbd>
-                    </div>
-                    <div class="shortcut-item">
-                        <span>Select All</span>
-                        <kbd>Ctrl+A</kbd>
-                    </div>
-                    <div class="shortcut-item">
-                        <span>Auto Layout</span>
-                        <kbd>Shift+Alt+L</kbd>
-                    </div>
+                    <div class="shortcut-item"><span>Save</span><kbd>Ctrl+S</kbd></div>
+                    <div class="shortcut-item"><span>Undo</span><kbd>Ctrl+Z</kbd></div>
+                    <div class="shortcut-item"><span>Redo</span><kbd>Ctrl+Y</kbd></div>
+                    <div class="shortcut-item"><span>Find</span><kbd>Ctrl+F</kbd></div>
+                    <div class="shortcut-item"><span>Select All</span><kbd>Ctrl+A</kbd></div>
+                    <div class="shortcut-item"><span>Deselect</span><kbd>Escape</kbd></div>
+                </div>
+            </div>
+            <div class="settings-group">
+                <h3>Edit</h3>
+                <div class="shortcuts-grid">
+                    <div class="shortcut-item"><span>Copy</span><kbd>Ctrl+C</kbd></div>
+                    <div class="shortcut-item"><span>Paste</span><kbd>Ctrl+V</kbd></div>
+                    <div class="shortcut-item"><span>Duplicate</span><kbd>Ctrl+D</kbd></div>
+                    <div class="shortcut-item"><span>Delete</span><kbd>Del</kbd></div>
+                    <div class="shortcut-item"><span>Group</span><kbd>Ctrl+G</kbd></div>
+                    <div class="shortcut-item"><span>Ungroup</span><kbd>Ctrl+Shift+G</kbd></div>
+                </div>
+            </div>
+            <div class="settings-group">
+                <h3>Movement & View</h3>
+                <div class="shortcuts-grid">
+                    <div class="shortcut-item"><span>Nudge</span><kbd>Arrow Keys</kbd></div>
+                    <div class="shortcut-item"><span>Nudge 10px</span><kbd>Shift+Arrow</kbd></div>
+                    <div class="shortcut-item"><span>Zoom In</span><kbd>Ctrl+=</kbd></div>
+                    <div class="shortcut-item"><span>Zoom Out</span><kbd>Ctrl+-</kbd></div>
+                    <div class="shortcut-item"><span>Fit to View</span><kbd>Ctrl+0</kbd></div>
+                    <div class="shortcut-item"><span>Auto Layout</span><kbd>Ctrl+Shift+L</kbd></div>
+                </div>
+            </div>
+            <div class="settings-group">
+                <h3>Layer Order</h3>
+                <div class="shortcuts-grid">
+                    <div class="shortcut-item"><span>Bring to Front</span><kbd>Ctrl+Shift+]</kbd></div>
+                    <div class="shortcut-item"><span>Send to Back</span><kbd>Ctrl+Shift+[</kbd></div>
                 </div>
             </div>
         `;
@@ -1385,8 +1426,365 @@ export class FluxdiagramApp {
                 e.preventDefault();
                 e.stopPropagation();
                 this.fitToView();
+            } else if (e.key === 'ArrowUp' || e.key === 'ArrowDown' || e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+                // Arrow key nudging for selected nodes
+                if (this.selectedNodeIds.size > 0) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const step = e.shiftKey ? 10 : 1;
+                    const dx = e.key === 'ArrowLeft' ? -step : e.key === 'ArrowRight' ? step : 0;
+                    const dy = e.key === 'ArrowUp' ? -step : e.key === 'ArrowDown' ? step : 0;
+                    this.nudgeSelectedNodes(dx, dy);
+                }
+            } else if (isMod && e.shiftKey && e.key === '[') {
+                // Send backward
+                e.preventDefault();
+                e.stopPropagation();
+                this.sendToBack();
+            } else if (isMod && e.shiftKey && e.key === ']') {
+                // Bring forward
+                e.preventDefault();
+                e.stopPropagation();
+                this.bringToFront();
+            } else if (isMod && e.key === 'g' && !e.shiftKey) {
+                // Group selected nodes
+                e.preventDefault();
+                e.stopPropagation();
+                this.groupSelectedNodes();
+            } else if (isMod && e.shiftKey && e.key === 'g') {
+                // Ungroup
+                e.preventDefault();
+                e.stopPropagation();
+                this.ungroupSelectedNodes();
+            } else if (isMod && e.key === 'f') {
+                // Find/Search
+                e.preventDefault();
+                e.stopPropagation();
+                this.showSearchDialog();
             }
         });
+    }
+
+    // ==========================================================================
+    // Node Nudging & Movement
+    // ==========================================================================
+
+    private nudgeSelectedNodes(dx: number, dy: number): void {
+        if (this.selectedNodeIds.size === 0 || !this.document) { return; }
+
+        // Only push history on first nudge (debounced)
+        if (!this.isNudging) {
+            this.pushHistory();
+            this.isNudging = true;
+            // Reset nudging flag after a short delay
+            setTimeout(() => { this.isNudging = false; }, 500);
+        }
+
+        for (const nodeId of this.selectedNodeIds) {
+            const node = this.document.nodes.find(n => n.id === nodeId);
+            if (node && !this.isLayerLocked(node.layerId)) {
+                node.position.x += dx;
+                node.position.y += dy;
+                node.metadata.updatedAt = Date.now();
+            }
+        }
+
+        this.render();
+        this.minimap.update(this.document.nodes);
+    }
+
+    private isNudging = false;
+
+    // ==========================================================================
+    // Grouping
+    // ==========================================================================
+
+    private groupSelectedNodes(): void {
+        if (this.selectedNodeIds.size < 2 || !this.document) {
+            this.showToast('Select 2+ nodes to group', 'info');
+            return;
+        }
+
+        this.pushHistory();
+
+        const nodes = this.document.nodes.filter(n => this.selectedNodeIds.has(n.id));
+        
+        // Calculate bounding box
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+        nodes.forEach(n => {
+            minX = Math.min(minX, n.position.x);
+            minY = Math.min(minY, n.position.y);
+            maxX = Math.max(maxX, n.position.x + n.size.width);
+            maxY = Math.max(maxY, n.position.y + n.size.height);
+        });
+
+        const padding = 20;
+        const groupId = this.generateId();
+
+        // Create group node
+        const groupNode: FlowNode = {
+            id: groupId,
+            type: 'group',
+            position: { x: minX - padding, y: minY - padding },
+            size: { width: maxX - minX + padding * 2, height: maxY - minY + padding * 2 },
+            data: { label: 'Group' },
+            style: {
+                backgroundColor: 'rgba(99, 102, 241, 0.05)',
+                borderColor: '#6366f1',
+                borderWidth: 2,
+                borderRadius: 12,
+                textColor: '#6366f1',
+                fontSize: 12,
+                fontFamily: 'Roboto, sans-serif',
+                fontWeight: 'normal',
+                textAlign: 'left',
+                opacity: 0.8,
+                shadow: false,
+            },
+            ports: [],
+            metadata: {
+                createdAt: Date.now(),
+                updatedAt: Date.now(),
+                locked: false,
+                visible: true,
+                zIndex: Math.min(...nodes.map(n => n.metadata.zIndex)) - 1,
+            },
+            layerId: this.activeLayerId,
+        };
+
+        // Set parent for grouped nodes
+        nodes.forEach(n => {
+            n.parentId = groupId;
+        });
+
+        this.document.nodes.unshift(groupNode);
+        this.selectedNodeIds.clear();
+        this.selectedNodeIds.add(groupId);
+
+        this.render();
+        this.minimap.update(this.document.nodes);
+        this.showToast(`Grouped ${nodes.length} nodes`, 'success');
+    }
+
+    private ungroupSelectedNodes(): void {
+        if (this.selectedNodeIds.size !== 1 || !this.document) { return; }
+
+        const groupId = Array.from(this.selectedNodeIds)[0];
+        const groupNode = this.document.nodes.find(n => n.id === groupId && n.type === 'group');
+        
+        if (!groupNode) {
+            this.showToast('Select a group to ungroup', 'info');
+            return;
+        }
+
+        this.pushHistory();
+
+        // Find children and remove parent reference
+        const children = this.document.nodes.filter(n => n.parentId === groupId);
+        children.forEach(n => {
+            delete n.parentId;
+        });
+
+        // Remove group node
+        this.document.nodes = this.document.nodes.filter(n => n.id !== groupId);
+
+        // Select the ungrouped nodes
+        this.selectedNodeIds.clear();
+        children.forEach(n => this.selectedNodeIds.add(n.id));
+
+        this.render();
+        this.minimap.update(this.document.nodes);
+        this.showToast(`Ungrouped ${children.length} nodes`, 'success');
+    }
+
+    // ==========================================================================
+    // Search/Find
+    // ==========================================================================
+
+    private showSearchDialog(): void {
+        const existingDialog = document.getElementById('search-dialog');
+        if (existingDialog) {
+            existingDialog.remove();
+            return;
+        }
+
+        const dialog = document.createElement('div');
+        dialog.id = 'search-dialog';
+        dialog.className = 'search-dialog';
+        dialog.innerHTML = `
+            <div class="search-input-wrapper">
+                <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="M21 21l-4.35-4.35"></path>
+                </svg>
+                <input type="text" id="search-input" placeholder="Search nodes..." autocomplete="off" />
+                <span class="search-results-count" id="search-count"></span>
+            </div>
+            <div class="search-results" id="search-results"></div>
+        `;
+
+        document.body.appendChild(dialog);
+
+        const input = document.getElementById('search-input') as HTMLInputElement;
+        const resultsEl = document.getElementById('search-results') as HTMLElement;
+        const countEl = document.getElementById('search-count') as HTMLElement;
+
+        input.focus();
+
+        let results: FlowNode[] = [];
+        let currentIndex = -1;
+
+        const updateResults = () => {
+            const query = input.value.toLowerCase().trim();
+            if (!query || !this.document) {
+                resultsEl.innerHTML = '';
+                countEl.textContent = '';
+                results = [];
+                return;
+            }
+
+            results = this.document.nodes.filter(n => 
+                n.data.label.toLowerCase().includes(query) ||
+                (n.data.description?.toLowerCase().includes(query))
+            );
+
+            countEl.textContent = results.length > 0 ? `${results.length} found` : 'No matches';
+
+            resultsEl.innerHTML = results.slice(0, 10).map((node, i) => `
+                <div class="search-result-item ${i === currentIndex ? 'active' : ''}" data-id="${node.id}">
+                    <span class="result-type">${node.type}</span>
+                    <span class="result-label">${this.escapeHtml(node.data.label)}</span>
+                </div>
+            `).join('');
+
+            // Add click handlers
+            resultsEl.querySelectorAll('.search-result-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const nodeId = (item as HTMLElement).dataset.id;
+                    if (nodeId) {
+                        this.selectAndZoomToNode(nodeId);
+                        dialog.remove();
+                    }
+                });
+            });
+        };
+
+        input.addEventListener('input', updateResults);
+
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                dialog.remove();
+            } else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                if (results.length > 0) {
+                    currentIndex = (currentIndex + 1) % Math.min(results.length, 10);
+                    updateResults();
+                }
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (results.length > 0) {
+                    currentIndex = currentIndex <= 0 ? Math.min(results.length, 10) - 1 : currentIndex - 1;
+                    updateResults();
+                }
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                const node = results[currentIndex >= 0 ? currentIndex : 0];
+                if (node) {
+                    this.selectAndZoomToNode(node.id);
+                    dialog.remove();
+                }
+            }
+        });
+
+        // Close on outside click
+        dialog.addEventListener('mousedown', (e) => {
+            if (e.target === dialog) {
+                dialog.remove();
+            }
+        });
+    }
+
+    private selectAndZoomToNode(nodeId: string): void {
+        const node = this.document?.nodes.find(n => n.id === nodeId);
+        if (!node) { return; }
+
+        this.selectedNodeIds.clear();
+        this.selectedNodeIds.add(nodeId);
+
+        // Center viewport on node
+        const centerX = node.position.x + node.size.width / 2;
+        const centerY = node.position.y + node.size.height / 2;
+
+        this.canvas.setViewport({
+            x: -centerX + this.canvas.getViewportSize().width / 2,
+            y: -centerY + this.canvas.getViewportSize().height / 2,
+            scale: 1
+        });
+
+        this.render();
+        this.updatePropertiesPanel();
+    }
+
+    // ==========================================================================
+    // Distribution Tools
+    // ==========================================================================
+
+    distributeHorizontally(): void {
+        const nodes = this.document!.nodes.filter(n => this.selectedNodeIds.has(n.id));
+        if (nodes.length < 3) {
+            this.showToast('Select 3+ nodes to distribute', 'info');
+            return;
+        }
+
+        this.pushHistory();
+
+        // Sort by x position
+        nodes.sort((a, b) => a.position.x - b.position.x);
+
+        const first = nodes[0];
+        const last = nodes[nodes.length - 1];
+        const totalWidth = (last.position.x + last.size.width) - first.position.x;
+        const nodesWidth = nodes.reduce((sum, n) => sum + n.size.width, 0);
+        const gap = (totalWidth - nodesWidth) / (nodes.length - 1);
+
+        let currentX = first.position.x;
+        nodes.forEach(node => {
+            node.position.x = currentX;
+            node.metadata.updatedAt = Date.now();
+            currentX += node.size.width + gap;
+        });
+
+        this.render();
+        this.showToast('Distributed horizontally', 'success');
+    }
+
+    distributeVertically(): void {
+        const nodes = this.document!.nodes.filter(n => this.selectedNodeIds.has(n.id));
+        if (nodes.length < 3) {
+            this.showToast('Select 3+ nodes to distribute', 'info');
+            return;
+        }
+
+        this.pushHistory();
+
+        // Sort by y position
+        nodes.sort((a, b) => a.position.y - b.position.y);
+
+        const first = nodes[0];
+        const last = nodes[nodes.length - 1];
+        const totalHeight = (last.position.y + last.size.height) - first.position.y;
+        const nodesHeight = nodes.reduce((sum, n) => sum + n.size.height, 0);
+        const gap = (totalHeight - nodesHeight) / (nodes.length - 1);
+
+        let currentY = first.position.y;
+        nodes.forEach(node => {
+            node.position.y = currentY;
+            node.metadata.updatedAt = Date.now();
+            currentY += node.size.height + gap;
+        });
+
+        this.render();
+        this.showToast('Distributed vertically', 'success');
     }
 
     // ==========================================================================
@@ -1440,46 +1838,96 @@ export class FluxdiagramApp {
       </div>
       
       <div class="property-group">
-        <div class="property-header">Style</div>
-        <div class="property-row">
-          <label for="prop-bgcolor">Background</label>
-          <input type="color" id="prop-bgcolor" value="${node.style.backgroundColor}" />
+        <div class="property-header">Colors</div>
+        <div class="property-row color-row">
+          <label for="prop-bgcolor">Fill</label>
+          <div class="color-input-wrapper">
+            <input type="color" id="prop-bgcolor" value="${node.style.backgroundColor}" />
+            <span class="color-value">${node.style.backgroundColor}</span>
+          </div>
+        </div>
+        <div class="property-row color-row">
+          <label for="prop-bordercolor">Border</label>
+          <div class="color-input-wrapper">
+            <input type="color" id="prop-bordercolor" value="${node.style.borderColor}" />
+            <span class="color-value">${node.style.borderColor}</span>
+          </div>
+        </div>
+        <div class="property-row color-row">
+          <label for="prop-textcolor">Text</label>
+          <div class="color-input-wrapper">
+            <input type="color" id="prop-textcolor" value="${node.style.textColor}" />
+            <span class="color-value">${node.style.textColor}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="property-group">
+        <div class="property-header">Border & Effects</div>
+        <div class="property-row inline">
+          <div>
+            <label for="prop-borderwidth">Width</label>
+            <input type="number" id="prop-borderwidth" value="${node.style.borderWidth ?? 2}" min="0" max="10" />
+          </div>
+          <div>
+            <label for="prop-borderradius">Radius</label>
+            <input type="number" id="prop-borderradius" value="${node.style.borderRadius ?? 8}" min="0" max="50" />
+          </div>
         </div>
         <div class="property-row">
-          <label for="prop-bordercolor">Border Color</label>
-          <input type="color" id="prop-bordercolor" value="${node.style.borderColor}" />
+          <label for="prop-opacity">Opacity</label>
+          <div class="range-input-wrapper">
+            <input type="range" id="prop-opacity" value="${(node.style.opacity ?? 1) * 100}" min="10" max="100" />
+            <span class="range-value">${Math.round((node.style.opacity ?? 1) * 100)}%</span>
+          </div>
         </div>
-        <div class="property-row">
-          <label for="prop-textcolor">Text Color</label>
-          <input type="color" id="prop-textcolor" value="${node.style.textColor}" />
+        <div class="property-row checkbox-row">
+          <label for="prop-shadow">Shadow</label>
+          <input type="checkbox" id="prop-shadow" ${node.style.shadow ? 'checked' : ''} />
         </div>
+      </div>
+      
+      <div class="property-group">
+        <div class="property-header">Typography</div>
         <div class="property-row">
-          <label for="prop-fontsize">Font Size</label>
-          <input type="number" id="prop-fontsize" value="${node.style.fontSize ?? 14}" min="8" max="72" />
-        </div>
-        <div class="property-row">
-          <label for="prop-fontfamily">Font Family</label>
+          <label for="prop-fontfamily">Font</label>
           <select id="prop-fontfamily">
-            <option value="Roboto, sans-serif" ${node.style.fontFamily?.includes('Roboto') ? 'selected' : ''}>Roboto (Material)</option>
+            <option value="Roboto, sans-serif" ${node.style.fontFamily?.includes('Roboto') ? 'selected' : ''}>Roboto</option>
             <option value="Inter, sans-serif" ${node.style.fontFamily?.includes('Inter') ? 'selected' : ''}>Inter</option>
             <option value="Open Sans, sans-serif" ${node.style.fontFamily?.includes('Open Sans') ? 'selected' : ''}>Open Sans</option>
             <option value="Lato, sans-serif" ${node.style.fontFamily?.includes('Lato') ? 'selected' : ''}>Lato</option>
             <option value="Poppins, sans-serif" ${node.style.fontFamily?.includes('Poppins') ? 'selected' : ''}>Poppins</option>
             <option value="Montserrat, sans-serif" ${node.style.fontFamily?.includes('Montserrat') ? 'selected' : ''}>Montserrat</option>
-            <option value="Source Sans Pro, sans-serif" ${node.style.fontFamily?.includes('Source Sans') ? 'selected' : ''}>Source Sans Pro</option>
-            <option value="Nunito, sans-serif" ${node.style.fontFamily?.includes('Nunito') ? 'selected' : ''}>Nunito</option>
-            <option value="Raleway, sans-serif" ${node.style.fontFamily?.includes('Raleway') ? 'selected' : ''}>Raleway</option>
-            <option value="Ubuntu, sans-serif" ${node.style.fontFamily?.includes('Ubuntu') ? 'selected' : ''}>Ubuntu</option>
-            <option value="Fira Code, monospace" ${node.style.fontFamily?.includes('Fira Code') ? 'selected' : ''}>Fira Code (Mono)</option>
+            <option value="Fira Code, monospace" ${node.style.fontFamily?.includes('Fira Code') ? 'selected' : ''}>Fira Code</option>
             <option value="JetBrains Mono, monospace" ${node.style.fontFamily?.includes('JetBrains') ? 'selected' : ''}>JetBrains Mono</option>
           </select>
         </div>
+        <div class="property-row inline">
+          <div>
+            <label for="prop-fontsize">Size</label>
+            <input type="number" id="prop-fontsize" value="${node.style.fontSize ?? 14}" min="8" max="72" />
+          </div>
+          <div>
+            <label for="prop-fontweight">Weight</label>
+            <select id="prop-fontweight">
+              <option value="normal" ${node.style.fontWeight === 'normal' ? 'selected' : ''}>Normal</option>
+              <option value="bold" ${node.style.fontWeight === 'bold' ? 'selected' : ''}>Bold</option>
+            </select>
+          </div>
+        </div>
         <div class="property-row">
-          <label for="prop-fontweight">Font Weight</label>
-          <select id="prop-fontweight">
-            <option value="normal" ${node.style.fontWeight === 'normal' ? 'selected' : ''}>Normal</option>
-            <option value="bold" ${node.style.fontWeight === 'bold' ? 'selected' : ''}>Bold</option>
-          </select>
+          <label for="prop-textalign">Align</label>
+          <div class="button-group">
+            <button class="align-btn ${node.style.textAlign === 'left' ? 'active' : ''}" data-align="left" title="Left">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="18" y2="18"/></svg>
+            </button>
+            <button class="align-btn ${node.style.textAlign === 'center' ? 'active' : ''}" data-align="center" title="Center">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="6" y1="12" x2="18" y2="12"/><line x1="5" y1="18" x2="19" y2="18"/></svg>
+            </button>
+            <button class="align-btn ${node.style.textAlign === 'right' ? 'active' : ''}" data-align="right" title="Right">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="9" y1="12" x2="21" y2="12"/><line x1="6" y1="18" x2="21" y2="18"/></svg>
+            </button>
+          </div>
         </div>
       </div>
       
@@ -1497,11 +1945,11 @@ export class FluxdiagramApp {
         </div>
         <div class="property-row inline">
           <div>
-            <label for="prop-width">Width</label>
+            <label for="prop-width">W</label>
             <input type="number" id="prop-width" value="${Math.round(node.size.width)}" min="40" />
           </div>
           <div>
-            <label for="prop-height">Height</label>
+            <label for="prop-height">H</label>
             <input type="number" id="prop-height" value="${Math.round(node.size.height)}" min="40" />
           </div>
         </div>
@@ -1557,24 +2005,62 @@ export class FluxdiagramApp {
             this.updateNodeData(node.id, { description: (e.target as HTMLTextAreaElement).value });
         });
 
-        // Style
+        // Colors
         document.getElementById('prop-bgcolor')?.addEventListener('input', (e) => {
-            this.updateNodeStyle(node.id, { backgroundColor: (e.target as HTMLInputElement).value });
+            const value = (e.target as HTMLInputElement).value;
+            this.updateNodeStyle(node.id, { backgroundColor: value });
+            const colorValue = (e.target as HTMLInputElement).parentElement?.querySelector('.color-value');
+            if (colorValue) { colorValue.textContent = value; }
         });
         document.getElementById('prop-bordercolor')?.addEventListener('input', (e) => {
-            this.updateNodeStyle(node.id, { borderColor: (e.target as HTMLInputElement).value });
+            const value = (e.target as HTMLInputElement).value;
+            this.updateNodeStyle(node.id, { borderColor: value });
+            const colorValue = (e.target as HTMLInputElement).parentElement?.querySelector('.color-value');
+            if (colorValue) { colorValue.textContent = value; }
         });
         document.getElementById('prop-textcolor')?.addEventListener('input', (e) => {
-            this.updateNodeStyle(node.id, { textColor: (e.target as HTMLInputElement).value });
+            const value = (e.target as HTMLInputElement).value;
+            this.updateNodeStyle(node.id, { textColor: value });
+            const colorValue = (e.target as HTMLInputElement).parentElement?.querySelector('.color-value');
+            if (colorValue) { colorValue.textContent = value; }
+        });
+
+        // Border & Effects
+        document.getElementById('prop-borderwidth')?.addEventListener('input', (e) => {
+            this.updateNodeStyle(node.id, { borderWidth: parseInt((e.target as HTMLInputElement).value, 10) });
+        });
+        document.getElementById('prop-borderradius')?.addEventListener('input', (e) => {
+            this.updateNodeStyle(node.id, { borderRadius: parseInt((e.target as HTMLInputElement).value, 10) });
+        });
+        document.getElementById('prop-opacity')?.addEventListener('input', (e) => {
+            const value = parseInt((e.target as HTMLInputElement).value, 10) / 100;
+            this.updateNodeStyle(node.id, { opacity: value });
+            const rangeValue = (e.target as HTMLInputElement).parentElement?.querySelector('.range-value');
+            if (rangeValue) { rangeValue.textContent = `${Math.round(value * 100)}%`; }
+        });
+        document.getElementById('prop-shadow')?.addEventListener('change', (e) => {
+            this.updateNodeStyle(node.id, { shadow: (e.target as HTMLInputElement).checked });
+        });
+
+        // Typography
+        document.getElementById('prop-fontfamily')?.addEventListener('change', (e) => {
+            this.updateNodeStyle(node.id, { fontFamily: (e.target as HTMLSelectElement).value });
         });
         document.getElementById('prop-fontsize')?.addEventListener('input', (e) => {
             this.updateNodeStyle(node.id, { fontSize: parseInt((e.target as HTMLInputElement).value, 10) });
         });
-        document.getElementById('prop-fontfamily')?.addEventListener('change', (e) => {
-            this.updateNodeStyle(node.id, { fontFamily: (e.target as HTMLSelectElement).value });
-        });
         document.getElementById('prop-fontweight')?.addEventListener('change', (e) => {
             this.updateNodeStyle(node.id, { fontWeight: (e.target as HTMLSelectElement).value as 'normal' | 'bold' });
+        });
+
+        // Text Align buttons
+        document.querySelectorAll('.align-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const align = (e.currentTarget as HTMLElement).dataset.align as 'left' | 'center' | 'right';
+                this.updateNodeStyle(node.id, { textAlign: align });
+                document.querySelectorAll('.align-btn').forEach(b => b.classList.remove('active'));
+                (e.currentTarget as HTMLElement).classList.add('active');
+            });
         });
 
         // Position

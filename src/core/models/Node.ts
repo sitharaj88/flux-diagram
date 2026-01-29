@@ -64,6 +64,42 @@ const DEFAULT_PORTS: Record<NodeType, Array<{ position: Port['position']; offset
         { position: 'bottom', offset: 0.25 },
         { position: 'bottom', offset: 0.75 },
     ],
+    'manual-input': [
+        { position: 'top', offset: 0.5 },
+        { position: 'right', offset: 0.5 },
+        { position: 'bottom', offset: 0.5 },
+        { position: 'left', offset: 0.5 },
+    ],
+    delay: [
+        { position: 'top', offset: 0.5 },
+        { position: 'right', offset: 0.5 },
+        { position: 'bottom', offset: 0.5 },
+        { position: 'left', offset: 0.5 },
+    ],
+    display: [
+        { position: 'top', offset: 0.5 },
+        { position: 'right', offset: 0.5 },
+        { position: 'bottom', offset: 0.5 },
+        { position: 'left', offset: 0.5 },
+    ],
+    connector: [
+        { position: 'top', offset: 0.5 },
+        { position: 'right', offset: 0.5 },
+        { position: 'bottom', offset: 0.5 },
+        { position: 'left', offset: 0.5 },
+    ],
+    'off-page-connector': [
+        { position: 'top', offset: 0.5 },
+        { position: 'right', offset: 0.5 },
+        { position: 'bottom', offset: 0.5 },
+        { position: 'left', offset: 0.5 },
+    ],
+    note: [
+        { position: 'top', offset: 0.5 },
+        { position: 'right', offset: 0.5 },
+        { position: 'bottom', offset: 0.5 },
+        { position: 'left', offset: 0.5 },
+    ],
     group: [],
 };
 
@@ -77,6 +113,12 @@ const DEFAULT_SIZES: Record<NodeType, Size> = {
     document: { width: 140, height: 100 },
     hexagon: { width: 140, height: 80 },
     triangle: { width: 120, height: 100 },
+    'manual-input': { width: 140, height: 70 },
+    delay: { width: 120, height: 80 },
+    display: { width: 140, height: 80 },
+    connector: { width: 40, height: 40 },
+    'off-page-connector': { width: 60, height: 60 },
+    note: { width: 120, height: 80 },
     group: { width: 300, height: 200 },
 };
 
