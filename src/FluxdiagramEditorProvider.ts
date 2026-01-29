@@ -460,9 +460,21 @@ export class FluxdiagramEditorProvider implements vscode.CustomTextEditorProvide
         </div>
       </aside>
 
-      <div class="canvas-container" id="canvas-container">
-        <svg class="canvas-grid" id="canvas-grid"></svg>
-        <svg class="canvas-main" id="canvas-main">
+      <div class="canvas-area" id="canvas-area">
+        <!-- Rulers -->
+        <div class="ruler-corner" id="ruler-corner"></div>
+        <div class="ruler-horizontal" id="ruler-horizontal">
+          <canvas class="ruler-canvas" id="ruler-h-canvas"></canvas>
+          <div class="ruler-cursor-indicator" id="ruler-h-cursor"></div>
+        </div>
+        <div class="ruler-vertical" id="ruler-vertical">
+          <canvas class="ruler-canvas" id="ruler-v-canvas"></canvas>
+          <div class="ruler-cursor-indicator" id="ruler-v-cursor"></div>
+        </div>
+
+        <div class="canvas-container" id="canvas-container">
+          <svg class="canvas-grid" id="canvas-grid"></svg>
+          <svg class="canvas-main" id="canvas-main">
           <defs>
             <!-- Arrow markers -->
             <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
@@ -477,6 +489,7 @@ export class FluxdiagramEditorProvider implements vscode.CustomTextEditorProvide
           <g id="canvas-overlay" class="layer-overlay"></g>
         </svg>
         <div class="canvas-overlay" id="interaction-overlay"></div>
+        </div>
       </div>
 
       <aside class="sidebar properties-panel" id="properties-panel">
@@ -511,6 +524,9 @@ export class FluxdiagramEditorProvider implements vscode.CustomTextEditorProvide
       <div class="menu-item" data-action="copy">Copy</div>
       <div class="menu-item" data-action="paste">Paste</div>
       <div class="menu-item" data-action="duplicate">Duplicate</div>
+      <div class="menu-divider"></div>
+      <div class="menu-item" data-action="copy-style">Copy Style</div>
+      <div class="menu-item" data-action="paste-style">Paste Style</div>
       <div class="menu-divider"></div>
       <div class="menu-item" data-action="delete">Delete</div>
       <div class="menu-divider"></div>

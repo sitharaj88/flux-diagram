@@ -198,6 +198,10 @@ export interface FluxdiagramSettings {
     snapToGrid: boolean;
     showMinimap: boolean;
     theme: 'light' | 'dark' | 'auto';
+    // Alignment & Snap-to-Nodes
+    snapToNodes: boolean;
+    snapThreshold: number;
+    showAlignmentGuides: boolean;
 }
 
 // ============================================================================

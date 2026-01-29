@@ -769,7 +769,8 @@ textarea:focus-visible {
    CANVAS AREA
    ============================================ */
 .canvas-container {
-  flex: 1;
+  grid-column: 2;
+  grid-row: 2;
   position: relative;
   overflow: hidden;
   background: var(--color-canvas-bg);

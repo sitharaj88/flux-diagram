@@ -42,7 +42,36 @@ export class NodeRenderer {
             group.insertBefore(outline, group.firstChild);
         }
 
+        // Lock indicator
+        if (node.metadata.locked) {
+            const lockIndicator = this.createLockIndicator(node);
+            group.appendChild(lockIndicator);
+        }
+
         this.container.appendChild(group);
+    }
+
+    private createLockIndicator(node: FlowNode): SVGGElement {
+        const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        g.setAttribute('class', 'lock-indicator');
+        g.setAttribute('transform', `translate(${node.size.width - 20}, 4)`);
+
+        // Lock icon background circle
+        const bg = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        bg.setAttribute('cx', '8');
+        bg.setAttribute('cy', '8');
+        bg.setAttribute('r', '10');
+        bg.setAttribute('fill', 'rgba(99, 102, 241, 0.9)');
+        g.appendChild(bg);
+
+        // Lock icon path (simplified lock icon)
+        const icon = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        icon.setAttribute('d', 'M6 8V6a2 2 0 1 1 4 0v2h1a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1h1zm1 0h2V6a1 1 0 0 0-2 0v2z');
+        icon.setAttribute('fill', 'white');
+        icon.setAttribute('transform', 'translate(3, 3) scale(0.7)');
+        g.appendChild(icon);
+
+        return g;
     }
 
     private createShape(node: FlowNode): SVGElement {

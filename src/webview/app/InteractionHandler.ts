@@ -8,12 +8,16 @@ import type { NodeRenderer } from './NodeRenderer';
 import type { EdgeRenderer } from './EdgeRenderer';
 import type { FluxdiagramApp } from './FluxdiagramApp';
 import type { Position } from '../../types';
+import { AlignmentGuideService } from './AlignmentGuideService';
 
 export class InteractionHandler {
     private canvas: CanvasController;
     private nodeRenderer: NodeRenderer;
     private edgeRenderer: EdgeRenderer;
     private app: FluxdiagramApp;
+
+    // Alignment guide service
+    private alignmentService: AlignmentGuideService;
 
     // Drag state
     private isDragging = false;
@@ -48,6 +52,7 @@ export class InteractionHandler {
         this.nodeRenderer = nodeRenderer;
         this.edgeRenderer = edgeRenderer;
         this.app = app;
+        this.alignmentService = new AlignmentGuideService();
         this.setupEventListeners();
     }
 
@@ -83,9 +88,18 @@ export class InteractionHandler {
 
             const nodeGroup = portGroup.closest('[data-node-id]') as SVGElement;
             if (nodeGroup) {
+                const portNodeId = nodeGroup.dataset.nodeId!;
+                const doc = this.app.getDocument();
+                const portNode = doc?.nodes.find((n) => n.id === portNodeId);
+
+                // Prevent connection from locked nodes
+                if (portNode && this.app.isNodeEffectivelyLocked(portNodeId)) {
+                    return;
+                }
+
                 this.isConnecting = true;
                 this.connectionStart = {
-                    nodeId: nodeGroup.dataset.nodeId!,
+                    nodeId: portNodeId,
                     portId: portGroup.dataset.portId!,
                 };
 
@@ -109,8 +123,8 @@ export class InteractionHandler {
             const node = doc?.nodes.find((n) => n.id === nodeId);
 
             if (node) {
-                // Prevent action if layer is locked
-                if (this.app.isLayerLocked(node.layerId) || !this.app.isLayerVisible(node.layerId)) {
+                // Prevent action if node or layer is locked
+                if (this.app.isNodeEffectivelyLocked(nodeId) || !this.app.isLayerVisible(node.layerId)) {
                     return;
                 }
 
@@ -120,7 +134,7 @@ export class InteractionHandler {
                 if (selectedIds.has(nodeId) && selectedIds.size > 1 && !e.shiftKey) {
                     this.isMultiDragging = true;
                     this.multiDragOffsets.clear();
-                    
+
                     // Calculate offset for each selected node
                     for (const id of selectedIds) {
                         const n = doc?.nodes.find((nd) => nd.id === id);
@@ -131,6 +145,13 @@ export class InteractionHandler {
                             });
                         }
                     }
+
+                    // Build alignment cache for snap-to-nodes (exclude all selected nodes)
+                    const settings = this.app.getSettings();
+                    if (settings?.snapToNodes && doc) {
+                        this.alignmentService.buildNodeEdgesCache(doc.nodes, selectedIds);
+                    }
+
                     document.body.classList.add('dragging');
                 } else {
                     // Single node drag
@@ -141,6 +162,12 @@ export class InteractionHandler {
                         x: worldPos.x - node.position.x,
                         y: worldPos.y - node.position.y,
                     };
+
+                    // Build alignment cache for snap-to-nodes
+                    const settings = this.app.getSettings();
+                    if (settings?.snapToNodes && doc) {
+                        this.alignmentService.buildNodeEdgesCache(doc.nodes, new Set([nodeId]));
+                    }
 
                     // Select node
                     this.app.selectNode(nodeId, e.shiftKey);
@@ -176,19 +203,74 @@ export class InteractionHandler {
         // Handle multi-node dragging
         if (this.isMultiDragging && this.multiDragOffsets.size > 0) {
             e.preventDefault();
-            const settings = this.app.getSettings() ?? { snapToGrid: true, gridSize: 20 };
+            const settings = this.app.getSettings() ?? { snapToGrid: true, gridSize: 20, snapToNodes: true, snapThreshold: 8, showAlignmentGuides: true };
+            const doc = this.app.getDocument();
 
-            for (const [nodeId, offset] of this.multiDragOffsets) {
-                let newX = worldPos.x - offset.x;
-                let newY = worldPos.y - offset.y;
+            // Use first selected node for alignment calculation
+            const firstNodeId = Array.from(this.multiDragOffsets.keys())[0]!;
+            const firstOffset = this.multiDragOffsets.get(firstNodeId)!;
+            const firstNode = doc?.nodes.find(n => n.id === firstNodeId);
 
-                if (settings.snapToGrid) {
-                    const gridSize = settings.gridSize || 20;
-                    newX = Math.round(newX / gridSize) * gridSize;
-                    newY = Math.round(newY / gridSize) * gridSize;
+            let baseX = worldPos.x - firstOffset.x;
+            let baseY = worldPos.y - firstOffset.y;
+            let snappedX = false;
+            let snappedY = false;
+
+            // Try snap-to-nodes first if enabled
+            if (settings.snapToNodes && firstNode) {
+                const snapResult = this.alignmentService.calculateSnapPosition(
+                    firstNode,
+                    { x: baseX, y: baseY },
+                    settings.snapThreshold || 8
+                );
+
+                if (snapResult.snappedX) {
+                    baseX = snapResult.position.x;
+                    snappedX = true;
+                }
+                if (snapResult.snappedY) {
+                    baseY = snapResult.position.y;
+                    snappedY = true;
                 }
 
-                this.app.moveNode(nodeId, { x: newX, y: newY });
+                // Render or clear guides
+                if (settings.showAlignmentGuides && snapResult.guideLines.length > 0) {
+                    this.alignmentService.renderGuides(snapResult.guideLines);
+                } else {
+                    this.alignmentService.clearGuides();
+                }
+            }
+
+            // Apply grid snapping for non-snapped axes
+            if (settings.snapToGrid) {
+                const gridSize = settings.gridSize || 20;
+                if (!snappedX) { baseX = Math.round(baseX / gridSize) * gridSize; }
+                if (!snappedY) { baseY = Math.round(baseY / gridSize) * gridSize; }
+            }
+
+            // Calculate delta from original first node position
+            const deltaX = baseX - (firstNode?.position.x ?? 0);
+            const deltaY = baseY - (firstNode?.position.y ?? 0);
+
+            // Move all nodes by the same delta
+            for (const [nodeId, offset] of this.multiDragOffsets) {
+                const node = doc?.nodes.find(n => n.id === nodeId);
+                if (node) {
+                    const newX = worldPos.x - offset.x + (snappedX ? (baseX - (worldPos.x - firstOffset.x)) : 0);
+                    const newY = worldPos.y - offset.y + (snappedY ? (baseY - (worldPos.y - firstOffset.y)) : 0);
+
+                    let finalX = newX;
+                    let finalY = newY;
+
+                    if (settings.snapToGrid && !snappedX) {
+                        finalX = Math.round(finalX / (settings.gridSize || 20)) * (settings.gridSize || 20);
+                    }
+                    if (settings.snapToGrid && !snappedY) {
+                        finalY = Math.round(finalY / (settings.gridSize || 20)) * (settings.gridSize || 20);
+                    }
+
+                    this.app.moveNode(nodeId, { x: finalX, y: finalY });
+                }
             }
             return;
         }
@@ -197,15 +279,45 @@ export class InteractionHandler {
         if (this.isDragging && this.dragNodeId) {
             e.preventDefault();
 
-            // Apply snap to grid if enabled
-            const settings = this.app.getSettings() ?? { snapToGrid: true, gridSize: 20 };
+            const settings = this.app.getSettings() ?? { snapToGrid: true, gridSize: 20, snapToNodes: true, snapThreshold: 8, showAlignmentGuides: true };
+            const doc = this.app.getDocument();
+            const node = doc?.nodes.find(n => n.id === this.dragNodeId);
+
             let newX = worldPos.x - this.dragOffset.x;
             let newY = worldPos.y - this.dragOffset.y;
+            let snappedX = false;
+            let snappedY = false;
 
+            // Try snap-to-nodes first if enabled
+            if (settings.snapToNodes && node) {
+                const snapResult = this.alignmentService.calculateSnapPosition(
+                    node,
+                    { x: newX, y: newY },
+                    settings.snapThreshold || 8
+                );
+
+                if (snapResult.snappedX) {
+                    newX = snapResult.position.x;
+                    snappedX = true;
+                }
+                if (snapResult.snappedY) {
+                    newY = snapResult.position.y;
+                    snappedY = true;
+                }
+
+                // Render or clear guides
+                if (settings.showAlignmentGuides && snapResult.guideLines.length > 0) {
+                    this.alignmentService.renderGuides(snapResult.guideLines);
+                } else {
+                    this.alignmentService.clearGuides();
+                }
+            }
+
+            // Apply grid snapping for non-snapped axes
             if (settings.snapToGrid) {
                 const gridSize = settings.gridSize || 20;
-                newX = Math.round(newX / gridSize) * gridSize;
-                newY = Math.round(newY / gridSize) * gridSize;
+                if (!snappedX) { newX = Math.round(newX / gridSize) * gridSize; }
+                if (!snappedY) { newY = Math.round(newY / gridSize) * gridSize; }
             }
 
             this.app.moveNode(this.dragNodeId, { x: newX, y: newY });
@@ -233,8 +345,8 @@ export class InteractionHandler {
                 const doc = this.app.getDocument();
                 const node = doc?.nodes.find(n => n.id === nodeId);
 
-                // Don't highlight ports on locked/hidden layers
-                if (node && (this.app.isLayerLocked(node.layerId) || !this.app.isLayerVisible(node.layerId))) {
+                // Don't highlight ports on locked nodes or hidden layers
+                if (node && (this.app.isNodeEffectivelyLocked(nodeId!) || !this.app.isLayerVisible(node.layerId))) {
                     return;
                 }
                 portGroup.classList.add('port-hover');
@@ -252,6 +364,8 @@ export class InteractionHandler {
         // Complete multi-node drag
         if (this.isMultiDragging) {
             this.app.moveNodeComplete();
+            this.alignmentService.clearGuides();
+            this.alignmentService.clearCache();
             document.body.classList.remove('dragging');
             this.isMultiDragging = false;
             this.multiDragOffsets.clear();
@@ -260,6 +374,8 @@ export class InteractionHandler {
         // Complete single node drag
         if (this.isDragging && this.dragNodeId) {
             this.app.moveNodeComplete();
+            this.alignmentService.clearGuides();
+            this.alignmentService.clearCache();
             document.body.classList.remove('dragging');
         }
 
@@ -283,8 +399,8 @@ export class InteractionHandler {
                     const doc = this.app.getDocument();
                     const targetNode = doc?.nodes.find(n => n.id === targetNodeId);
 
-                    // Helper check for locked target
-                    if (!targetNode || (!this.app.isLayerLocked(targetNode.layerId) && this.app.isLayerVisible(targetNode.layerId))) {
+                    // Helper check for locked target (check node lock + layer lock)
+                    if (!targetNode || (!this.app.isNodeEffectivelyLocked(targetNodeId) && this.app.isLayerVisible(targetNode.layerId))) {
                         // Create the edge
                         this.app.addEdge(
                             this.connectionStart.nodeId,
@@ -339,8 +455,8 @@ export class InteractionHandler {
             const node = doc?.nodes.find((n) => n.id === nodeId);
 
             if (node) {
-                if (this.app.isLayerLocked(node.layerId) || !this.app.isLayerVisible(node.layerId)) {
-                    // Optionally show toast "Layer is locked"
+                if (this.app.isNodeEffectivelyLocked(nodeId) || !this.app.isLayerVisible(node.layerId)) {
+                    // Optionally show toast "Node is locked"
                     return;
                 }
 

@@ -8,6 +8,7 @@ import { NodeRenderer } from './NodeRenderer';
 import { EdgeRenderer } from './EdgeRenderer';
 import { InteractionHandler } from './InteractionHandler';
 import { Minimap } from './Minimap';
+import { RulerController } from './RulerController';
 import { ExportService } from '../../export/ExportService';
 import type { FluxdiagramDocument, FlowNode, FlowEdge, NodeType, NodeStyle, Port, EdgeStyle, EdgeType, Position } from '../../types';
 
@@ -26,10 +27,12 @@ export class FluxdiagramApp {
     private edgeRenderer: EdgeRenderer;
     private interaction: InteractionHandler;
     private minimap: Minimap;
+    private ruler: RulerController;
 
     private selectedNodeIds: Set<string> = new Set();
     private selectedEdgeIds: Set<string> = new Set();
     private clipboard: { nodes: FlowNode[]; edges: FlowEdge[] } | null = null;
+    private styleClipboard: NodeStyle | null = null;
 
     private undoStack: FluxdiagramDocument[] = [];
     private redoStack: FluxdiagramDocument[] = [];
@@ -74,6 +77,8 @@ export class FluxdiagramApp {
             document.getElementById('minimap-viewport') as SVGRectElement,
             this.canvas
         );
+
+        this.ruler = new RulerController(this.canvas);
 
         // Setup UI event listeners
         this.setupToolbar();
@@ -137,6 +142,9 @@ export class FluxdiagramApp {
                     snapToGrid: true,
                     showMinimap: true,
                     theme: 'auto',
+                    snapToNodes: true,
+                    snapThreshold: 8,
+                    showAlignmentGuides: true,
                 },
             };
             this.activeLayerId = 'default';
@@ -159,6 +167,7 @@ export class FluxdiagramApp {
         this.renderLayers();
         this.canvas.setViewport(this.document.viewport);
         this.minimap.update(this.document.nodes);
+        this.ruler.render();
 
         // Clear history
         this.undoStack = [];
@@ -696,6 +705,7 @@ export class FluxdiagramApp {
         this.edgeRenderer.render(this.document.edges, visibleNodes, this.selectedEdgeIds);
 
         this.renderLayers();
+        this.ruler.render();
     }
 
     public isLayerLocked(layerId?: string): boolean {
@@ -710,7 +720,331 @@ export class FluxdiagramApp {
         return layer ? layer.visible : true;
     }
 
+    // ==========================================================================
+    // Node Locking
+    // ==========================================================================
 
+    public isNodeLocked(nodeId: string): boolean {
+        if (!this.document) { return false; }
+        const node = this.document.nodes.find(n => n.id === nodeId);
+        return node ? node.metadata.locked : false;
+    }
+
+    public isNodeEffectivelyLocked(nodeId: string): boolean {
+        if (!this.document) { return false; }
+        const node = this.document.nodes.find(n => n.id === nodeId);
+        if (!node) { return false; }
+        return node.metadata.locked || this.isLayerLocked(node.layerId);
+    }
+
+    toggleNodeLock(): void {
+        if (this.selectedNodeIds.size === 0) {
+            this.showToast('Select node(s) to toggle lock', 'info');
+            return;
+        }
+
+        this.pushHistory();
+
+        // Determine if we're locking or unlocking based on first selected node
+        const firstNodeId = Array.from(this.selectedNodeIds)[0]!;
+        const firstNode = this.document!.nodes.find(n => n.id === firstNodeId);
+        const newLockState = firstNode ? !firstNode.metadata.locked : true;
+
+        for (const nodeId of this.selectedNodeIds) {
+            const node = this.document!.nodes.find(n => n.id === nodeId);
+            if (node) {
+                node.metadata.locked = newLockState;
+                node.metadata.updatedAt = Date.now();
+            }
+        }
+
+        this.render();
+        this.updatePropertiesPanel();
+        this.showToast(newLockState ? 'Node(s) locked' : 'Node(s) unlocked', 'success');
+    }
+
+    // ==========================================================================
+    // Style Copy/Paste
+    // ==========================================================================
+
+    copyStyle(): void {
+        if (this.selectedNodeIds.size !== 1) {
+            this.showToast('Select exactly one node to copy style', 'info');
+            return;
+        }
+
+        const nodeId = Array.from(this.selectedNodeIds)[0]!;
+        const node = this.document!.nodes.find((n) => n.id === nodeId);
+
+        if (!node) { return; }
+
+        // Deep clone the style object
+        this.styleClipboard = JSON.parse(JSON.stringify(node.style)) as NodeStyle;
+        this.showToast('Style copied', 'success');
+    }
+
+    pasteStyle(): void {
+        if (!this.styleClipboard) {
+            this.showToast('No style copied', 'info');
+            return;
+        }
+
+        if (this.selectedNodeIds.size === 0) {
+            this.showToast('Select node(s) to paste style', 'info');
+            return;
+        }
+
+        this.pushHistory();
+
+        let appliedCount = 0;
+        for (const nodeId of this.selectedNodeIds) {
+            const node = this.document!.nodes.find((n) => n.id === nodeId);
+            if (node && !this.isNodeEffectivelyLocked(nodeId)) {
+                node.style = { ...this.styleClipboard };
+                node.metadata.updatedAt = Date.now();
+                appliedCount++;
+            }
+        }
+
+        this.render();
+        this.updatePropertiesPanel();
+        this.showToast(`Style applied to ${appliedCount} node(s)`, 'success');
+    }
+
+    // ==========================================================================
+    // Multi-Node Property Editing
+    // ==========================================================================
+
+    private getSelectedNodes(): FlowNode[] {
+        if (!this.document) { return []; }
+        return this.document.nodes.filter(n => this.selectedNodeIds.has(n.id));
+    }
+
+    private getCommonPropertyValue<T>(
+        nodes: FlowNode[],
+        getter: (node: FlowNode) => T
+    ): { value: T | undefined; isMixed: boolean } {
+        if (nodes.length === 0) {
+            return { value: undefined, isMixed: false };
+        }
+
+        const firstValue = getter(nodes[0]!);
+        const allSame = nodes.every(node => getter(node) === firstValue);
+
+        return {
+            value: allSame ? firstValue : undefined,
+            isMixed: !allSame
+        };
+    }
+
+    private updateMultiNodeStyle(style: Partial<NodeStyle>): void {
+        if (this.selectedNodeIds.size < 2) { return; }
+
+        // Single history entry for the batch operation
+        this.pushHistory();
+
+        for (const nodeId of this.selectedNodeIds) {
+            const node = this.document!.nodes.find(n => n.id === nodeId);
+            if (node && !this.isNodeEffectivelyLocked(nodeId)) {
+                node.style = { ...node.style, ...style };
+                node.metadata.updatedAt = Date.now();
+            }
+        }
+
+        this.render();
+    }
+
+    private renderMultiNodeProperties(nodes: FlowNode[]): string {
+        const bgColor = this.getCommonPropertyValue(nodes, n => n.style.backgroundColor);
+        const borderColor = this.getCommonPropertyValue(nodes, n => n.style.borderColor);
+        const textColor = this.getCommonPropertyValue(nodes, n => n.style.textColor);
+        const borderWidth = this.getCommonPropertyValue(nodes, n => n.style.borderWidth);
+        const borderRadius = this.getCommonPropertyValue(nodes, n => n.style.borderRadius);
+        const fontSize = this.getCommonPropertyValue(nodes, n => n.style.fontSize);
+        const fontFamily = this.getCommonPropertyValue(nodes, n => n.style.fontFamily);
+        const fontWeight = this.getCommonPropertyValue(nodes, n => n.style.fontWeight);
+        const opacity = this.getCommonPropertyValue(nodes, n => n.style.opacity);
+        const shadow = this.getCommonPropertyValue(nodes, n => n.style.shadow);
+
+        return `
+      <div class="property-group">
+        <div class="property-header">${nodes.length} nodes selected</div>
+        <p class="property-hint">Changes apply to all selected nodes</p>
+      </div>
+
+      <div class="property-group">
+        <div class="property-header">Colors</div>
+        <div class="property-row color-row">
+          <label for="multi-bgcolor">Fill</label>
+          <div class="color-input-wrapper">
+            <input type="color" id="multi-bgcolor"
+                   value="${bgColor.isMixed ? '#888888' : bgColor.value}"
+                   class="${bgColor.isMixed ? 'mixed-value' : ''}" />
+            <span class="color-value">${bgColor.isMixed ? 'Mixed' : bgColor.value}</span>
+          </div>
+        </div>
+        <div class="property-row color-row">
+          <label for="multi-bordercolor">Border</label>
+          <div class="color-input-wrapper">
+            <input type="color" id="multi-bordercolor"
+                   value="${borderColor.isMixed ? '#888888' : borderColor.value}"
+                   class="${borderColor.isMixed ? 'mixed-value' : ''}" />
+            <span class="color-value">${borderColor.isMixed ? 'Mixed' : borderColor.value}</span>
+          </div>
+        </div>
+        <div class="property-row color-row">
+          <label for="multi-textcolor">Text</label>
+          <div class="color-input-wrapper">
+            <input type="color" id="multi-textcolor"
+                   value="${textColor.isMixed ? '#888888' : textColor.value}"
+                   class="${textColor.isMixed ? 'mixed-value' : ''}" />
+            <span class="color-value">${textColor.isMixed ? 'Mixed' : textColor.value}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="property-group">
+        <div class="property-header">Border & Effects</div>
+        <div class="property-row inline">
+          <div>
+            <label for="multi-borderwidth">Width</label>
+            <input type="number" id="multi-borderwidth"
+                   value="${borderWidth.isMixed ? '' : borderWidth.value}"
+                   placeholder="${borderWidth.isMixed ? 'Mixed' : ''}"
+                   min="0" max="10" />
+          </div>
+          <div>
+            <label for="multi-borderradius">Radius</label>
+            <input type="number" id="multi-borderradius"
+                   value="${borderRadius.isMixed ? '' : borderRadius.value}"
+                   placeholder="${borderRadius.isMixed ? 'Mixed' : ''}"
+                   min="0" max="50" />
+          </div>
+        </div>
+        <div class="property-row">
+          <label for="multi-opacity">Opacity</label>
+          <div class="range-input-wrapper">
+            <input type="range" id="multi-opacity"
+                   value="${opacity.isMixed ? 100 : ((opacity.value as number) ?? 1) * 100}"
+                   min="10" max="100" />
+            <span class="range-value">${opacity.isMixed ? 'Mixed' : Math.round(((opacity.value as number) ?? 1) * 100) + '%'}</span>
+          </div>
+        </div>
+        <div class="property-row checkbox-row">
+          <label for="multi-shadow">Shadow</label>
+          <input type="checkbox" id="multi-shadow"
+                 ${shadow.isMixed ? '' : (shadow.value ? 'checked' : '')}
+                 class="${shadow.isMixed ? 'mixed-value' : ''}" />
+          ${shadow.isMixed ? '<span class="mixed-indicator">Mixed</span>' : ''}
+        </div>
+      </div>
+
+      <div class="property-group">
+        <div class="property-header">Typography</div>
+        <div class="property-row">
+          <label for="multi-fontfamily">Font</label>
+          <select id="multi-fontfamily">
+            <option value="" ${fontFamily.isMixed ? 'selected' : ''}>-- Mixed --</option>
+            <option value="Roboto, sans-serif" ${!fontFamily.isMixed && String(fontFamily.value).includes('Roboto') ? 'selected' : ''}>Roboto</option>
+            <option value="Inter, sans-serif" ${!fontFamily.isMixed && String(fontFamily.value).includes('Inter') ? 'selected' : ''}>Inter</option>
+            <option value="Open Sans, sans-serif" ${!fontFamily.isMixed && String(fontFamily.value).includes('Open Sans') ? 'selected' : ''}>Open Sans</option>
+            <option value="Lato, sans-serif" ${!fontFamily.isMixed && String(fontFamily.value).includes('Lato') ? 'selected' : ''}>Lato</option>
+            <option value="Poppins, sans-serif" ${!fontFamily.isMixed && String(fontFamily.value).includes('Poppins') ? 'selected' : ''}>Poppins</option>
+            <option value="Fira Code, monospace" ${!fontFamily.isMixed && String(fontFamily.value).includes('Fira Code') ? 'selected' : ''}>Fira Code</option>
+          </select>
+        </div>
+        <div class="property-row inline">
+          <div>
+            <label for="multi-fontsize">Size</label>
+            <input type="number" id="multi-fontsize"
+                   value="${fontSize.isMixed ? '' : fontSize.value}"
+                   placeholder="${fontSize.isMixed ? 'Mixed' : ''}"
+                   min="8" max="72" />
+          </div>
+          <div>
+            <label for="multi-fontweight">Weight</label>
+            <select id="multi-fontweight">
+              <option value="" ${fontWeight.isMixed ? 'selected' : ''}>-- Mixed --</option>
+              <option value="normal" ${!fontWeight.isMixed && fontWeight.value === 'normal' ? 'selected' : ''}>Normal</option>
+              <option value="bold" ${!fontWeight.isMixed && fontWeight.value === 'bold' ? 'selected' : ''}>Bold</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    `;
+    }
+
+    private attachMultiPropertyListeners(): void {
+        // Colors
+        document.getElementById('multi-bgcolor')?.addEventListener('input', (e) => {
+            const value = (e.target as HTMLInputElement).value;
+            this.updateMultiNodeStyle({ backgroundColor: value });
+            const colorValue = (e.target as HTMLInputElement).parentElement?.querySelector('.color-value');
+            if (colorValue) { colorValue.textContent = value; }
+        });
+
+        document.getElementById('multi-bordercolor')?.addEventListener('input', (e) => {
+            const value = (e.target as HTMLInputElement).value;
+            this.updateMultiNodeStyle({ borderColor: value });
+            const colorValue = (e.target as HTMLInputElement).parentElement?.querySelector('.color-value');
+            if (colorValue) { colorValue.textContent = value; }
+        });
+
+        document.getElementById('multi-textcolor')?.addEventListener('input', (e) => {
+            const value = (e.target as HTMLInputElement).value;
+            this.updateMultiNodeStyle({ textColor: value });
+            const colorValue = (e.target as HTMLInputElement).parentElement?.querySelector('.color-value');
+            if (colorValue) { colorValue.textContent = value; }
+        });
+
+        // Border & Effects
+        document.getElementById('multi-borderwidth')?.addEventListener('input', (e) => {
+            const value = parseInt((e.target as HTMLInputElement).value, 10);
+            if (!isNaN(value)) {
+                this.updateMultiNodeStyle({ borderWidth: value });
+            }
+        });
+
+        document.getElementById('multi-borderradius')?.addEventListener('input', (e) => {
+            const value = parseInt((e.target as HTMLInputElement).value, 10);
+            if (!isNaN(value)) {
+                this.updateMultiNodeStyle({ borderRadius: value });
+            }
+        });
+
+        document.getElementById('multi-opacity')?.addEventListener('input', (e) => {
+            const value = parseInt((e.target as HTMLInputElement).value, 10) / 100;
+            this.updateMultiNodeStyle({ opacity: value });
+            const rangeValue = (e.target as HTMLInputElement).parentElement?.querySelector('.range-value');
+            if (rangeValue) { rangeValue.textContent = `${Math.round(value * 100)}%`; }
+        });
+
+        document.getElementById('multi-shadow')?.addEventListener('change', (e) => {
+            this.updateMultiNodeStyle({ shadow: (e.target as HTMLInputElement).checked });
+        });
+
+        // Typography
+        document.getElementById('multi-fontfamily')?.addEventListener('change', (e) => {
+            const value = (e.target as HTMLSelectElement).value;
+            if (value) {
+                this.updateMultiNodeStyle({ fontFamily: value });
+            }
+        });
+
+        document.getElementById('multi-fontsize')?.addEventListener('input', (e) => {
+            const value = parseInt((e.target as HTMLInputElement).value, 10);
+            if (!isNaN(value)) {
+                this.updateMultiNodeStyle({ fontSize: value });
+            }
+        });
+
+        document.getElementById('multi-fontweight')?.addEventListener('change', (e) => {
+            const value = (e.target as HTMLSelectElement).value as 'normal' | 'bold';
+            if (value) {
+                this.updateMultiNodeStyle({ fontWeight: value });
+            }
+        });
+    }
 
     // ==========================================================================
     // UI Setup
@@ -1358,6 +1692,8 @@ export class FluxdiagramApp {
                     case 'copy': this.copy(); break;
                     case 'paste': this.paste(); break;
                     case 'duplicate': this.duplicate(); break;
+                    case 'copy-style': this.copyStyle(); break;
+                    case 'paste-style': this.pasteStyle(); break;
                     case 'delete': this.deleteSelected(); break;
                     case 'bring-front': this.bringToFront(); break;
                     case 'send-back': this.sendToBack(); break;
@@ -1461,6 +1797,21 @@ export class FluxdiagramApp {
                 e.preventDefault();
                 e.stopPropagation();
                 this.showSearchDialog();
+            } else if (isMod && e.key === 'l' && !e.shiftKey) {
+                // Toggle node lock
+                e.preventDefault();
+                e.stopPropagation();
+                this.toggleNodeLock();
+            } else if (isMod && e.shiftKey && e.key === 'c') {
+                // Copy style
+                e.preventDefault();
+                e.stopPropagation();
+                this.copyStyle();
+            } else if (isMod && e.shiftKey && e.key === 'v') {
+                // Paste style
+                e.preventDefault();
+                e.stopPropagation();
+                this.pasteStyle();
             }
         });
     }
@@ -1482,7 +1833,7 @@ export class FluxdiagramApp {
 
         for (const nodeId of this.selectedNodeIds) {
             const node = this.document.nodes.find(n => n.id === nodeId);
-            if (node && !this.isLayerLocked(node.layerId)) {
+            if (node && !this.isNodeEffectivelyLocked(nodeId)) {
                 node.position.x += dx;
                 node.position.y += dy;
                 node.metadata.updatedAt = Date.now();
@@ -1809,11 +2160,9 @@ export class FluxdiagramApp {
                 this.attachEdgePropertyListeners(edge);
             }
         } else if (this.selectedNodeIds.size > 1) {
-            content.innerHTML = `
-        <div class="property-group">
-          <div class="property-header">${this.selectedNodeIds.size} nodes selected</div>
-        </div>
-      `;
+            const selectedNodes = this.getSelectedNodes();
+            content.innerHTML = this.renderMultiNodeProperties(selectedNodes);
+            this.attachMultiPropertyListeners();
         } else {
             content.innerHTML = `
         <div class="empty-state">
@@ -1825,6 +2174,14 @@ export class FluxdiagramApp {
 
     private renderNodeProperties(node: FlowNode): string {
         return `
+      <div class="property-group">
+        <div class="property-header">Status</div>
+        <div class="property-row checkbox-row">
+          <label for="prop-locked">Locked</label>
+          <input type="checkbox" id="prop-locked" ${node.metadata.locked ? 'checked' : ''} />
+        </div>
+      </div>
+
       <div class="property-group">
         <div class="property-header">Content</div>
         <div class="property-row">
@@ -1995,6 +2352,18 @@ export class FluxdiagramApp {
     }
 
     private attachPropertyListeners(node: FlowNode): void {
+        // Locked status
+        document.getElementById('prop-locked')?.addEventListener('change', (e) => {
+            this.pushHistory();
+            const nodeObj = this.document!.nodes.find(n => n.id === node.id);
+            if (nodeObj) {
+                nodeObj.metadata.locked = (e.target as HTMLInputElement).checked;
+                nodeObj.metadata.updatedAt = Date.now();
+                this.render();
+                this.showToast(nodeObj.metadata.locked ? 'Node locked' : 'Node unlocked', 'success');
+            }
+        });
+
         // Label
         document.getElementById('prop-label')?.addEventListener('input', (e) => {
             this.updateNodeData(node.id, { label: (e.target as HTMLInputElement).value });
